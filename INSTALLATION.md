@@ -1,5 +1,7 @@
 # Installation on Windows, Linux and macOS
 
+For a guided first setup followed by configuration and usage, start with [QUICKSTART.md](QUICKSTART.md).
+
 Use this repository as the tooling distribution. Keep it outside the software repository you want to configure. Machine setup installs official Spec Kit; install.py then installs the project files. The same tooling environment can serve multiple project clones.
 
 The default is a Python virtual environment. Native Python, Conda and Docker are alternatives. None of these methods installs a coding assistant, compiler, board SDK, semantic index engine or model subscription.
@@ -66,23 +68,69 @@ Outside an active venv or Conda environment, this uses pip's user installation. 
 
 ## Conda or Miniforge
 
-From this tooling repository in a Conda enabled shell on any supported OS:
+From this tooling repository in a Conda-enabled shell, choose an environment name and activate it:
 
 ```text
-conda env create --file environment.yml
-conda run -n spec_kit_engineering python install.py /path/to/project --integration copilot
-conda run -n spec_kit_engineering python install.py /path/to/project --integration copilot --apply
+conda env create --name spec_kit_engineering --file environment.yml
+conda activate spec_kit_engineering
+specify version
+python install.py /path/to/project --specify specify --integration copilot
+python install.py /path/to/project --specify specify --integration copilot --apply
 ```
 
-Use a Windows path such as C:\work\project on Windows. Environment activation is optional because conda run selects the environment. To create a differently named environment, add --name YOUR_NAME to conda env create and use the same name with conda run.
+Use a Windows path such as `C:\work\project` on Windows. `spec_kit_engineering` is only the default: replace it with your chosen name in creation and activation commands. `--name` overrides the name in environment.yml. Once active, use `python` and `specify` normally. Explicit `--specify specify` chooses the CLI on the environment's PATH rather than an existing tooling `.venv`.
 
-The Python helper offers the equivalent creation path when Python and Conda are already available:
+When Python and Conda are already available, the helper offers the same override:
 
 ```text
-python setup_tooling.py --mode conda --conda-name spec_kit_engineering --apply
+python setup_tooling.py --mode conda --conda-name my_spec_tools --apply
+conda activate my_spec_tools
 ```
 
-Creation stops if the named environment already exists. Deliberate updates can use conda env update --file environment.yml. Review dependency changes before updating a shared team environment.
+Omit `--apply` to preview creation. After successful installation the helper prints the activation command for the chosen name. For unattended commands or an unactivated shell, use:
+
+```text
+conda run -n my_spec_tools python install.py /path/to/project --specify specify --integration copilot --apply
+```
+
+Creation stops if the named environment already exists. To deliberately update your selected environment, use `conda env update --name my_spec_tools --file environment.yml`. Review dependency changes before updating a shared environment.
+
+### Conda activation troubleshooting
+
+Activation changes the current shell. A Python child process cannot activate its parent shell, so setup prints the next command instead of claiming it activated the environment. In an initialised Bash/Zsh shell, installation and activation can be chained:
+
+```bash
+python setup_tooling.py --mode conda --conda-name my_spec_tools --apply && conda activate my_spec_tools
+```
+
+The activation runs only if setup succeeds. In PowerShell, run activation after checking success:
+
+```powershell
+python setup_tooling.py --mode conda --conda-name my_spec_tools --apply
+if ($LASTEXITCODE -eq 0) { conda activate my_spec_tools }
+```
+
+If `conda activate` reports missing shell initialisation, run the command matching your shell once, then close and reopen that terminal:
+
+| Shell | Initialisation command |
+| --- | --- |
+| Bash | `conda init bash` |
+| Zsh | `conda init zsh` |
+| PowerShell | `conda init powershell` |
+| Windows Command Prompt | `conda init cmd.exe` |
+
+These commands modify shell startup configuration; the setup helper does not run them automatically. If `conda` itself is unavailable, use an Anaconda/Miniforge Prompt or the installed Conda executable to initialise the desired shell. Then run `conda activate my_spec_tools`.
+
+Verify the selected interpreter and CLI:
+
+```text
+python -c "import sys; print(sys.executable)"
+specify version
+```
+
+The interpreter should belong to the selected environment and the CLI should report 1.0.4. IDE terminals may need reopening after initialisation; IDE run/debug interpreter selection is separate from terminal activation. `conda run -n my_spec_tools ...` remains an option when activation is inconvenient.
+
+See the official [Conda shell initialisation documentation](https://docs.conda.io/projects/conda/en/latest/commands/init.html) for shell-specific details. These instructions do not establish that Conda creation or activation was executed in this repository's validation environment.
 
 ## Docker
 

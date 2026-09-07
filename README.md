@@ -4,7 +4,9 @@ This package adapts the official [GitHub Spec Kit](https://github.com/github/spe
 
 ## Start here
 
-Read STATUS.md for what is ready and what remains unimplemented. Read INSTALLATION.md for native Python, venv, Conda and Docker instructions on Windows, Linux and macOS. Read REPOSITORY.md to push this distribution to your own Git repository.
+Follow [QUICKSTART.md](QUICKSTART.md) for a guided installation, project configuration and first feature workflow.
+
+Read STATUS.md for what is ready and what remains unimplemented. Read ROADMAP.md for the proposed direction for personal overrides, portable knowledge, trunk snapshots and team sharing, and IMPLEMENTATION_PLAN.md for delivery work packages. Read INSTALLATION.md for native Python, venv, Conda and Docker instructions on Windows, Linux and macOS. Read REPOSITORY.md to push this distribution to your own Git repository.
 
 For Linux or macOS, the shortest venv setup is:
 

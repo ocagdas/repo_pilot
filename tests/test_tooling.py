@@ -1,4 +1,7 @@
 import importlib.util
+import json
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -24,6 +27,18 @@ class ToolingTests(unittest.TestCase):
             self.assertFalse(directory.exists())
     def test_conda_name_rejects_option_injection(self):
         with self.assertRaises(ValueError): module.commands('conda',Path('.'),'--prefix')
+    def test_custom_conda_name_reaches_creation_command_in_preview(self):
+        result = subprocess.run(
+            [sys.executable, str(ROOT / 'setup_tooling.py'), '--mode', 'conda',
+             '--conda-name', 'my_spec_tools'],
+            capture_output=True, text=True, encoding='utf-8', check=True,
+        )
+        plan = json.loads(result.stdout)
+        self.assertFalse(plan['apply'])
+        command = plan['commands'][0]
+        self.assertEqual(command[command.index('--name') + 1], 'my_spec_tools')
+        self.assertNotIn('conda activate', result.stdout)
+
     def test_official_pin_consistency(self):
         import json
         lock=json.loads((ROOT/'upstream.lock.json').read_text())

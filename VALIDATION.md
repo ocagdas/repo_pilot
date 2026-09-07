@@ -31,3 +31,9 @@ The completion validator uses only the standard library and supports the keyword
 7 September 2026: all 37 tests passed locally on Linux: 20 bootstrap, 6 completion, 7 installation and 4 tooling setup tests. The three machine setup modes produced valid preview commands without target writes. Installer tests used an existing isolated environment containing the pinned official CLI. Fresh native or Conda dependency installation and Docker image execution were not run. Windows and macOS were not available.
 
 Added explicit UTF8 subprocess handling, platform neutral migration path keys, current interpreter test commands, and exact CLI version checking. Added native, venv and Conda setup planning plus Docker build instructions. JSON and YAML parsed successfully. The GitHub Actions matrix is supplied but has not run remotely.
+
+## Conda setup guidance update
+
+7 September 2026: five tooling tests passed locally using `python3 -m unittest discover -s tests -p test_tooling.py -v`. The new subprocess regression test uses the current Python interpreter and verifies that `--conda-name my_spec_tools` reaches the creation command in preview without installing an environment. Documentation links, code fences and diff whitespace were checked.
+
+The existing environment-name option now has CLI help, and successful Conda setup prints activation guidance. Actual Conda creation, post-install activation and Windows/macOS shell behaviour were not executed for this change. The full installation suite was not rerun for this focused setup/documentation update.

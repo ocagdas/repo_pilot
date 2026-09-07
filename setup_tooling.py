@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import sys
 
@@ -32,7 +33,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices=['native','venv','conda'], default='venv')
     parser.add_argument('--env-dir', type=Path, default=ROOT / '.venv')
-    parser.add_argument('--conda-name', default='spec_kit_engineering')
+    parser.add_argument('--conda-name', default='spec_kit_engineering',
+                        help='Conda environment name (default: %(default)s)')
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
     if sys.version_info < (3,11): parser.error('Python 3.11 or newer is required')
@@ -45,6 +47,11 @@ def main():
         for command in plan:
             subprocess.run(command, cwd=ROOT, check=True)
         print('Tooling installed. Follow INSTALLATION.md to run install.py for a target repository.')
+        if args.mode == 'conda':
+            print('Activate the environment in your current shell:')
+            print('  conda activate ' + shlex.quote(args.conda_name))
+            print('Then use python and specify normally; pass --specify specify to install.py.')
+            print('Setup cannot activate its parent shell. If activation fails, see the Conda shell setup in INSTALLATION.md.')
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         parser.exit(1, str(error) + '\n')
 

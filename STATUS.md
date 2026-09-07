@@ -2,6 +2,8 @@
 
 Package version: 1.1.0. Date: 7 September 2026. Official Spec Kit remains pinned to v1.0.4.
 
+See ROADMAP.md for proposed delivery phases covering hierarchical settings, local Spec Kit version overrides, reusable semantic knowledge and shared trunk publication. These are planned capabilities, not additions to current readiness.
+
 ## Ready for a project pilot
 
 1. Official Spec Kit installation and composable engineering preset and extension.
