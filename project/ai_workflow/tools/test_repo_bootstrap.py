@@ -73,63 +73,76 @@ class RepositoryBootstrapTest(unittest.TestCase):
         return json.loads(source)
 
     def test_project_config_used_for_all_commands_without_explicit_path(self):
-        config = json.loads(CONFIG.read_text(encoding='utf-8'))
-        config['semantic_index']['mode'] = 'disabled'
-        config['state_directory'] = '.ai_cache/custom'
-        project_config = self.repo / 'ai_workflow/bootstrap.json'
+        config = json.loads(CONFIG.read_text(encoding="utf-8"))
+        config["semantic_index"]["mode"] = "disabled"
+        config["state_directory"] = ".ai_cache/custom"
+        project_config = self.repo / "ai_workflow/bootstrap.json"
         project_config.parent.mkdir()
-        project_config.write_text(json.dumps(config), encoding='utf-8')
+        project_config.write_text(json.dumps(config), encoding="utf-8")
+
         def invoke(command):
-            result = subprocess.run([sys.executable, str(SCRIPT), command, '--repo', str(self.repo),
-                                     '--base-ref', 'main'], capture_output=True, text=True, encoding='utf-8')
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), command, "--repo", str(self.repo), "--base-ref", "main"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
             self.assertEqual(result.returncode, 0, result.stderr)
             return json.loads(result.stdout)
-        prepared = invoke('prepare')
-        self.assertEqual(prepared['semantic_index']['mode'], 'disabled')
+
+        prepared = invoke("prepare")
+        self.assertEqual(prepared["semantic_index"]["mode"], "disabled")
         self.satisfy_request(prepared)
-        invoke('complete')
-        self.assertTrue(invoke('status')['knowledge_fresh'])
-        self.assertTrue((self.repo / '.ai_cache/custom').is_dir())
-        self.assertFalse((self.repo / '.ai_cache/code_knowledge').exists())
-        explicit = self.command('prepare')  # helper supplies the distribution config explicitly
-        self.assertEqual(explicit['semantic_index']['mode'], 'auto')
+        invoke("complete")
+        self.assertTrue(invoke("status")["knowledge_fresh"])
+        self.assertTrue((self.repo / ".ai_cache/custom").is_dir())
+        self.assertFalse((self.repo / ".ai_cache/code_knowledge").exists())
+        explicit = self.command("prepare")  # helper supplies the distribution config explicitly
+        self.assertEqual(explicit["semantic_index"]["mode"], "auto")
 
     def test_missing_project_config_falls_back_but_malformed_config_fails(self):
         import repo_bootstrap
-        args = repo_bootstrap.parser().parse_args(['status', '--repo', str(self.repo)])
-        self.assertEqual(repo_bootstrap.effective_config(args, self.repo)['semantic_index']['mode'], 'auto')
-        path = self.repo / 'ai_workflow/bootstrap.json'
+
+        args = repo_bootstrap.parser().parse_args(["status", "--repo", str(self.repo)])
+        self.assertEqual(repo_bootstrap.effective_config(args, self.repo)["semantic_index"]["mode"], "auto")
+        path = self.repo / "ai_workflow/bootstrap.json"
         path.parent.mkdir()
-        path.write_text('{', encoding='utf-8')
-        with self.assertRaises(ValueError):
+        path.write_text("{", encoding="utf-8")
+        with self.assertRaisesRegex(repo_bootstrap.BootstrapError, "bootstrap.json: invalid JSON"):
             repo_bootstrap.effective_config(args, self.repo)
 
     def test_personal_semantic_override_and_invocation_precedence(self) -> None:
-        local = self.repo / 'ai_workflow/settings.local.json'
+        local = self.repo / "ai_workflow/settings.local.json"
         local.parent.mkdir()
-        local.write_text(json.dumps({'schema_version': '1.0', 'settings': {'knowledge': {'mode': 'source'}}}), encoding='utf-8')
-        self.assertEqual(self.command('prepare')['semantic_index']['mode'], 'disabled')
-        error = self.command('prepare', '--knowledge-mode', 'index', expect_success=False)
-        self.assertIn('Required semantic index is unavailable', error['message'])
+        local.write_text(
+            json.dumps({"schema_version": "1.0", "settings": {"knowledge": {"mode": "source"}}}), encoding="utf-8"
+        )
+        self.assertEqual(self.command("prepare")["semantic_index"]["mode"], "disabled")
+        error = self.command("prepare", "--knowledge-mode", "index", expect_success=False)
+        self.assertIn("Required semantic index is unavailable", error["message"])
 
     def test_personal_config_change_invalidates_completed_and_pending_analysis(self) -> None:
         # Ignore local preferences as installed projects do, so source identity
         # stays unchanged and only the effective configuration causes invalidation.
-        exclude = self.repo / '.git/info/exclude'
-        with exclude.open('a', encoding='utf-8') as handle:
-            handle.write('\n/ai_workflow/settings.local.json\n')
-        initial = self.command('prepare')
+        exclude = self.repo / ".git/info/exclude"
+        with exclude.open("a", encoding="utf-8") as handle:
+            handle.write("\n/ai_workflow/settings.local.json\n")
+        initial = self.command("prepare")
         self.satisfy_request(initial)
-        self.command('complete')
-        local = self.repo / 'ai_workflow/settings.local.json'
+        self.command("complete")
+        local = self.repo / "ai_workflow/settings.local.json"
         local.parent.mkdir(exist_ok=True)
-        local.write_text(json.dumps({'schema_version': '1.0', 'settings': {'knowledge': {'mode': 'source'}}}), encoding='utf-8')
-        self.assertFalse(self.command('status')['knowledge_fresh'])
-        pending = self.command('prepare')
+        local.write_text(
+            json.dumps({"schema_version": "1.0", "settings": {"knowledge": {"mode": "source"}}}), encoding="utf-8"
+        )
+        self.assertFalse(self.command("status")["knowledge_fresh"])
+        pending = self.command("prepare")
         self.satisfy_request(pending)
-        local.write_text(json.dumps({'schema_version': '1.0', 'settings': {'knowledge': {'mode': 'auto'}}}), encoding='utf-8')
-        error = self.command('complete', expect_success=False)
-        self.assertIn('Configuration changed after preparation', error['message'])
+        local.write_text(
+            json.dumps({"schema_version": "1.0", "settings": {"knowledge": {"mode": "auto"}}}), encoding="utf-8"
+        )
+        error = self.command("complete", expect_success=False)
+        self.assertIn("Configuration changed after preparation", error["message"])
 
     def custom_config(self, **semantic_changes: object) -> Path:
         config = json.loads(CONFIG.read_text(encoding="utf-8"))
@@ -166,6 +179,114 @@ class RepositoryBootstrapTest(unittest.TestCase):
             path = self.repo / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("# Analysis\n\nVerified test output.\n", encoding="utf-8")
+
+    def test_candidate_integrity_and_request_paths_rejected_before_promotion(self):
+        for mutation in ("revision", "contents", "missing_digest", "path"):
+            with self.subTest(mutation=mutation):
+                request = self.command("prepare", "--force-full")
+                self.satisfy_request(request)
+                candidate = self.repo / request["candidate_file_index"]
+                pending = self.repo / request["state_directory"] / "analysis_request.json"
+                value = json.loads(candidate.read_text(encoding="utf-8"))
+                if mutation == "revision":
+                    value["source_commit"] = "0" * 40
+                elif mutation == "contents":
+                    value["files"] = []
+                elif mutation == "missing_digest":
+                    modified = dict(request)
+                    del modified["candidate_digest"]
+                    pending.write_text(json.dumps(modified), encoding="utf-8")
+                else:
+                    modified = dict(request, candidate_file_index="../other.json")
+                    pending.write_text(json.dumps(modified), encoding="utf-8")
+                candidate.write_text(json.dumps(value), encoding="utf-8")
+                self.command("complete", expect_success=False)
+                self.assertFalse((self.repo / request["state_directory"] / "state.json").exists())
+
+    def test_layout_collisions_rejected_without_cache_writes(self):
+        for section, key, value in (
+            ("analysis", "file_index_file", "state.json"),
+            ("analysis", "pending_request_file", "candidate_file_index.json"),
+            ("analysis", "repository_analysis_file", "deltas/report.md"),
+            ("analysis", "file_index_file", "STATE.JSON"),
+            ("layer_storage", "branch_overlay_directory", "overlays"),
+            ("layer_storage", "base_directory", "matching_branches/subdir"),
+            ("semantic_index", "manifest_file", "file_overlay.json"),
+        ):
+            with self.subTest(key=key, value=value):
+                config = json.loads(CONFIG.read_text(encoding="utf-8"))
+                config[section][key] = value
+                path = self.repo / "config.json"
+                path.write_text(json.dumps(config), encoding="utf-8")
+                self.command("prepare", config=path, expect_success=False)
+                self.assertFalse((self.repo / ".ai_cache").exists())
+
+    def test_saved_index_corruption_is_not_reported_fresh_and_can_be_rebuilt(self):
+        request = self.command("prepare")
+        self.satisfy_request(request)
+        self.command("complete")
+        index = self.repo / request["state_directory"] / "file_index.json"
+        data = json.loads(index.read_text(encoding="utf-8"))
+        data["files"] = []
+        index.write_text(json.dumps(data), encoding="utf-8")
+        self.assertFalse(self.command("status")["knowledge_fresh"])
+        self.command("prepare", expect_success=False)
+        refreshed = self.command("prepare", "--force-full")
+        self.assertEqual(refreshed["action_required"], "full_analysis")
+
+    def test_index_path_change_invalidates_before_integrity_check(self):
+        first = self.command("prepare")
+        self.satisfy_request(first)
+        self.command("complete")
+        config = json.loads(CONFIG.read_text(encoding="utf-8"))
+        config["analysis"]["file_index_file"] = "new_index.json"
+        path = self.repo / "changed-config.json"
+        path.write_text(json.dumps(config), encoding="utf-8")
+        request = self.command("prepare", config=path)
+        self.assertEqual(request["action_required"], "full_analysis")
+        self.assertIn("configuration_changed", request["reasons"])
+        self.satisfy_request(request)
+        self.command("complete", config=path)
+        self.assertTrue(self.command("status", config=path)["knowledge_fresh"])
+        self.assertEqual(self.command("prepare", config=path)["action_required"], "none")
+
+    def test_configuration_change_rebuilds_without_reading_obsolete_index(self):
+        first = self.command("prepare")
+        self.satisfy_request(first)
+        self.command("complete")
+        old = self.repo / first["state_directory"] / "file_index.json"
+        old.write_text("corrupt old data", encoding="utf-8")
+        config = json.loads(CONFIG.read_text(encoding="utf-8"))
+        config["source_selection"]["include_globs"].append("**/*.custom")
+        path = self.repo / "changed-config.json"
+        path.write_text(json.dumps(config), encoding="utf-8")
+        request = self.command("prepare", config=path)
+        self.assertEqual(request["action_required"], "full_analysis")
+        self.assertIn("configuration_changed", request["reasons"])
+
+    def test_sha256_repository_full_incremental_and_unchanged_flow(self):
+        # Keep the same fixture root but construct an independent SHA-256 Git repo.
+        self.repo = self.repo / "sha256"
+        self.repo.mkdir()
+        self.git("init", "--object-format=sha256", "-b", "main")
+        self.git("config", "user.email", "test@example.invalid")
+        self.git("config", "user.name", "Bootstrap Test")
+        source = self.repo / "example.py"
+        source.write_text("x = 1\n", encoding="utf-8")
+        self.git("add", ".")
+        self.git("commit", "-m", "initial")
+        request = self.command("prepare")
+        self.assertEqual(len(request["source_commit"]), 64)
+        self.satisfy_request(request)
+        self.command("complete")
+        self.assertTrue(self.command("status")["knowledge_fresh"])
+        self.assertEqual(self.command("prepare")["action_required"], "none")
+        source.write_text("x = 2\n", encoding="utf-8")
+        request = self.command("prepare")
+        self.assertEqual(request["action_required"], "incremental_analysis")
+        self.satisfy_request(request)
+        self.command("complete")
+        self.assertTrue(self.command("status")["knowledge_fresh"])
 
     def test_full_incremental_and_unchanged_flow(self) -> None:
         initial = self.command("prepare")
@@ -275,11 +396,11 @@ class RepositoryBootstrapTest(unittest.TestCase):
         self.assertEqual(worktree_overlay["records"][0]["source_revision"], "worktree")
 
     def test_optional_backend_override_is_reported_without_launching_it(self) -> None:
-        default = self.command('prepare')
-        self.assertEqual(default['semantic_index']['optional_backend'], 'off')
-        selected = self.command('prepare', '--knowledge-backend', 'cgc')
-        self.assertEqual(selected['semantic_index']['optional_backend'], 'cgc')
-        self.assertFalse((self.repo / '.ai_cache/code_knowledge/cgc').exists())
+        default = self.command("prepare")
+        self.assertEqual(default["semantic_index"]["optional_backend"], "off")
+        selected = self.command("prepare", "--knowledge-backend", "cgc")
+        self.assertEqual(selected["semantic_index"]["optional_backend"], "cgc")
+        self.assertFalse((self.repo / ".ai_cache/code_knowledge/cgc").exists())
 
     def test_semantic_index_auto_falls_back_when_absent(self) -> None:
         request = self.command("prepare")
@@ -362,6 +483,15 @@ class RepositoryBootstrapTest(unittest.TestCase):
         self.assertEqual(semantic["incompatible_layers"]["base"], "source_commit_mismatch")
         self.assertTrue(semantic["fallback_to_direct_source"])
 
+    def test_malformed_semantic_manifest_uses_source_fallback(self):
+        first = self.command("prepare")
+        manifest = self.repo / first["semantic_index"]["manifest_paths"]["base"]
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text("[]", encoding="utf-8")
+        second = self.command("prepare")
+        self.assertTrue(second["semantic_index"]["fallback_to_direct_source"])
+        self.assertIn("invalid_manifest", second["semantic_index"]["incompatible_layers"]["base"])
+
     def test_python_source_is_included(self) -> None:
         (self.repo / "pipeline.py").write_text("x = 1\n")
         request = self.command("prepare")
@@ -398,8 +528,7 @@ class RepositoryBootstrapTest(unittest.TestCase):
         self.assertIn("Configuration changed", error["message"])
 
     def test_required_mode_does_not_accept_update_declaration(self) -> None:
-        config = self.custom_config(mode="required", create_when_missing=True,
-                                    branch_overlay_update_command="update")
+        config = self.custom_config(mode="required", create_when_missing=True, branch_overlay_update_command="update")
         (self.repo / "compile_commands.json").write_text("[]")
         error = self.command("prepare", config=config, expect_success=False)
         self.assertEqual(error["status"], "error")

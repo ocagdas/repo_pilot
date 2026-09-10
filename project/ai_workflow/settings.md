@@ -117,3 +117,17 @@ Bootstrap retains --config for an explicit legacy bootstrap file; its contents e
 ## Optional retrieval backend
 
 `knowledge.backend` defaults to `off`; select `cgc` or `sourcegraph` at any settings layer. `cgc.executable` defaults to `cgc`; `cgc.data_dir` defaults to the checkout cache and supports file-relative overrides. Sourcegraph uses `sourcegraph.url`, `sourcegraph.repository` and `sourcegraph.token_env` (default `SOURCEGRAPH_TOKEN`). See [knowledge_backends.md](knowledge_backends.md) for commands, storage and sharing.
+
+## Bootstrap validation and incremental inventory
+
+`bootstrap.json` is a complete shared configuration, while `settings.local.json` and user settings are partial overrides. Bootstrap validates the shared configuration against the bundled `bootstrap.schema.json` before writing cache state. Errors identify the file and setting, including missing/unknown fields, incorrect types, invalid branch regular expressions, unsafe output paths and invalid namespace placeholders. Preserve the bundled schema when customising the configuration; it defines the tooling contract.
+
+Incremental file inventories reuse unchanged records. Each inventory also records the dirty paths it analysed, so subsequent runs can detect restored files, renamed/deleted files and removed untracked files. Older inventories without this provenance receive a full hashing pass when they next need updating. Git inventory enumeration still runs; the optimisation avoids rereading unchanged source content, and does not provide semantic graph composition or a measured token-saving guarantee. Use `bootstrap prepare --force-full` to explicitly rebuild an invalid file index.
+
+Bootstrap validates output paths as a complete layout: reserved state/candidate filenames, duplicate or nested output destinations, overlapping layer roots and inventory/semantic-manifest collisions are rejected before cache writes. Case-only aliases are rejected for portability. The same layout builder supplies the paths used by prepare, complete and status.
+
+Prepared requests record a digest of their candidate index. Completion checks that digest, the source revision and worktree fingerprint, and verifies the request's paths against the configured layout before promotion. Completed state retains the index digest, so status cannot report a replaced index as fresh. These checks detect altered or mixed cache records; they do not authenticate data from another publisher. Older pending requests must be prepared again, and completed caches without integrity metadata receive a full refresh. A damaged index can be rebuilt with `bootstrap prepare --force-full`; malformed state records report the cache file requiring removal.
+
+Bootstrap supports repositories using Git's SHA-1 and SHA-256 object formats, detected through `git rev-parse --show-object-format`. Persisted repository revisions are validated against that format. Cache content digests remain SHA-256 in both cases; the separate official Spec Kit commit-pin rules are unchanged.
+
+Analysis planning handles configuration changes and other full-rebuild conditions before checking an index for reuse. Changing the configured index filename therefore schedules a full analysis using the new layout. Integrity checks still reject altered indices when the existing cache is otherwise reusable.

@@ -1,0 +1,134 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: ['**']
+  merge_group:
+  workflow_dispatch:
+  workflow_call:
+    outputs:
+      go:
+        description: All required quality jobs succeeded
+        value: ${{ jobs.quality-gate.outputs.go }}
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  quality:
+    name: Formatting and analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m ruff format --check .
+      - run: python -m ruff check .
+      - run: python scripts/validate_project.py
+      - name: Validate workflow expressions and job wiring
+        shell: bash
+        run: |
+          curl --fail --location --silent --show-error --max-time 120 -o "$RUNNER_TEMP/actionlint.tar.gz" https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          echo "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color
+  unit:
+    name: Unit (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python: '3.11'}
+          - {os: ubuntu-latest, python: '3.12'}
+          - {os: ubuntu-latest, python: '3.13'}
+          - {os: macos-14, python: '3.13'}
+          - {os: windows-latest, python: '3.13'}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e '.[dev,sourcegraph]'
+      - run: python scripts/run_tests.py --report .quality/unit.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: unit-${{ matrix.os }}-${{ matrix.python }}
+          path: .quality/unit.json
+          if-no-files-found: error
+  integration:
+    name: Full integration (no skips)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -e '.[dev,all]'
+      - run: python scripts/prepare_integration.py --github-env
+      - run: python scripts/check.py --full
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: integration-evidence
+          path: .quality/*.json
+          if-no-files-found: error
+  artifacts:
+    name: Distribution artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -e '.[dev]'
+      - run: python scripts/build_release.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: distributions
+          path: .quality/release/*
+          if-no-files-found: error
+  quality-gate:
+    name: Quality gate
+    if: always()
+    needs: [quality, unit, integration, artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      go: ${{ steps.gate.outputs.go }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13'
+      - id: gate
+        run: python scripts/ci_gate.py
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: quality-gate
+          path: .quality/ci-gate.json
+          if-no-files-found: error

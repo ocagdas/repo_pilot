@@ -13,7 +13,7 @@ See ROADMAP.md for proposed delivery phases covering hierarchical settings, loca
 5. Local Git inventories and branch deltas, with optional semantic availability detection and source fallback.
 6. Conservative initial installation and unchanged v6 migration with archived original files.
 7. Machine setup helper for native Python, venv and Conda; Dockerfile; operating system specific instructions.
-8. A repository layout and local regression tests suitable for your own Git host. No GitHub Actions workflow is currently included; adding regression CI and recording remote results remain follow-up work.
+8. A repository layout and local regression tests suitable for your own Git host. GitHub Actions CI and release-readiness workflows now provide formatting, static analysis, unit/integration tests and validated distribution artifacts; hosted results and branch-protection enforcement still require a real remote run and administrator setup.
 9. Hierarchical JSON preferences shared by setup, installation and bootstrap, effective-setting inspection, stable project identity and conservative project configuration. See project/ai_workflow/settings.md.
 10. Official release/commit overrides, isolated environments, portable source records, staging compatibility checks and conservative upgrade preview/apply. See TOOLCHAIN_VERSIONS.md.
 11. Installable repo-pilot command, static/editable source modes and minimal/CGC/Sourcegraph/all dependency profiles. See INSTALL_MODES.md.
@@ -38,6 +38,14 @@ Linux execution with pinned Spec Kit 1.0.4 and alternate 1.0.3 is tested. Conda 
 
 8 September 2026: the current working tree was reviewed against the roadmap, and all 84 existing tests passed on Linux with no skips. See the baseline reconciliation entry in VALIDATION.md for the precise scope. IMPLEMENTATION_PLAN.md now lists delivered, partial and planned work together. These statements include pending changes and do not imply a release.
 
-Next: choose the representative pilot and measure correctness and agent token use with the existing adapters. Repository regression CI is a separate open maintenance item; semantic branch reuse and knowledge publication remain later milestones.
+Next: choose the representative pilot and measure correctness and agent token use with the existing adapters. Repository regression CI is implemented locally; remote execution and enforcement remain to be configured; semantic branch reuse and knowledge publication remain later milestones.
 
 10 September 2026 review fixes: installed bootstrap respects consumer configuration, alternate CLI discovery handles installed launchers and PATH shadowing, native verification follows pip's installation scheme, and failed CGC imports clean up staging. See VALIDATION.md for current regression evidence.
+
+10 September 2026 structural review follow-up: added recoverable atomic installation writes, bounded toolchain/setup commands, incremental inventory record reuse with dirty-path provenance, bootstrap contract validation, callable CLI handlers and operation-specific backend diagnostics. Validation evidence and limitations are recorded in VALIDATION.md.
+
+10 September 2026 recovery/integrity follow-up: OS-owned installation locks replace PID checks, journal retirement makes cleanup retryable, and bootstrap binds requests to candidate contents and checks output-path collisions using one layout definition. Linux process-death tests and Windows locking simulations are distinguished in VALIDATION.md.
+
+10 September 2026 cancellation/planning follow-up: toolchain cancellation shares timeout cleanup; bootstrap invalidation precedes cache-reuse integrity checks; SHA-1 and SHA-256 repository revisions are supported. Atomic persistence and state/request/index contracts now live in the consumer payload's knowledge_state.py module. See VALIDATION.md for execution evidence.
+
+10 September 2026 open-source/CI readiness: MIT metadata and notices are reconciled; community policies, contribution templates, code ownership and changelog are supplied. CI checks formatting, static analysis, workflow validity, distribution contracts, cross-platform unit matrices, strict Linux integration and release artifacts. Local rehearsal evidence is in VALIDATION.md; no hosted run, branch-protection change or public release is claimed.

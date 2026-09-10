@@ -1,6 +1,6 @@
 # Maintaining the tooling package
 
-Set up official Spec Kit using INSTALLATION.md, then run the bootstrap and package tests. SPECIFY_BIN should identify the CLI in the chosen environment.
+Install the development tools with `python -m pip install -e '.[dev]'`. Set up official Spec Kit using INSTALLATION.md, then run the bootstrap and package tests. SPECIFY_BIN should identify the CLI in the chosen environment.
 
 Linux or macOS with the default venv:
 
@@ -47,6 +47,24 @@ Set `REPO_PILOT_PACKAGE_TESTS=1` to include actual static/editable pip installat
 
 ## Baseline and CI status
 
-No repository regression workflow is currently included. Run the checks above locally; adding CI is tracked in IMPLEMENTATION_PLAN.md separately from future knowledge-artifact publication. A pushed commit is not evidence that remote tests ran.
+Repository regression CI and release-readiness workflows are included; see CI.md for local commands, strict integration prerequisites and branch-protection setup. Knowledge-artifact publication remains separate future work. A pushed commit is not evidence that remote tests ran.
 
 Before recording a baseline, reconcile ROADMAP.md and IMPLEMENTATION_PLAN.md with the code, label partial deliveries, and distinguish historical validation from the current run. Include the optional packaging and alternate-version checks when validating those parts of a pending change, and report every skip. Keep claims about generated integration files separate from live agent results.
+
+## Contributor quickstart and quality gate
+
+Read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [SUPPORT.md](SUPPORT.md). Discuss significant behavior or architecture changes in an issue before starting; focused bug fixes and documentation improvements can go directly to a pull request. Include a minimal reproducer, explain the resulting behavior, and keep unrelated changes separate.
+
+```bash
+python -m venv .venv-dev
+# Activate .venv-dev using your shell, then:
+python -m pip install -e '.[dev]'
+python -m ruff format .
+python scripts/check.py
+```
+
+Use the current interpreter for child Python commands and UTF-8 for text files. Unit checks disclose optional integration skips; the strict full gate rejects skips. Follow [CI.md](CI.md) to prepare full integration checks, build release candidates, read JSON gate results and configure protected branches. Fix the cause of a failed gate rather than changing the gate to ignore it.
+
+By submitting a contribution, you confirm that you have the right to contribute it under this repository's MIT license. Preserve applicable third-party notices. No separate CLA is currently required. Do not include proprietary code, private graph data or credentials in fixtures. Report vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
+
+Record user-visible changes under Unreleased in [CHANGELOG.md](CHANGELOG.md). The default review owner is listed in `.github/CODEOWNERS`; GitHub only enforces owner review when an administrator enables that branch rule. Version changes are intentional release work, not automatic side effects of a contribution.

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,13 +8,36 @@ version = "1.1.0"
 description = "Project guidance and optional code knowledge for GitHub Spec Kit"
 requires-python = ">=3.11"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE.md"]
+keywords = ["spec-kit", "developer-tools", "llm", "code-index", "project-guidance"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Build Tools",
+]
+
 # setup_tooling.py installs the selected immutable Spec Kit source separately.
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/ocagdas/repo_pilot"
+Repository = "https://github.com/ocagdas/repo_pilot"
+Issues = "https://github.com/ocagdas/repo_pilot/issues"
+Documentation = "https://github.com/ocagdas/repo_pilot/blob/main/QUICKSTART.md"
+
+
 
 [project.scripts]
 repo-pilot = "repo_pilot.cli:main"
 
 [project.optional-dependencies]
+dev = ["ruff==0.12.0", "build==1.3.0", "twine==6.2.0", "jsonschema==4.26.0", "PyYAML==6.0.3"]
 cgc = ["codegraphcontext==0.6.13", "kuzu==0.11.3", "mcp==1.30.0"]
 sourcegraph = ["mcp==1.30.0"]
 all = ["codegraphcontext==0.6.13", "kuzu==0.11.3", "mcp==1.30.0"]
@@ -28,11 +51,27 @@ include-package-data = false
 repo_pilot = [
   "upstream.lock.json", "legacy_v6_files.json", "requirements*.txt", "environment.yml",
   "preset/**/*.md", "preset/*.yml", "extension/**/*.md", "extension/*.yml",
-  "project/*.md", "project/ai_workflow/*.md", "project/ai_workflow/*.json",
+  "project/ai_workflow/LICENSE", "project/*.md", "project/ai_workflow/*.md", "project/ai_workflow/*.json",
   "project/ai_workflow/*.yaml", "project/ai_workflow/knowledge/*.json",
   "project/ai_workflow/tools/*.py", "project/.github/*.md",
   "project/.specify/memory/*.md", "project/.cursor/rules/*.mdc"
 ]
 
 [tool.setuptools.exclude-package-data]
-repo_pilot = ["**/test_*.py", "**/__pycache__/*"]
+repo_pilot = ["**/test_*.py", "**/__pycache__/*", "**/settings.local.json"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = [".venv*", ".toolchains", ".ai_cache", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests deliberately import modules from the standalone consumer payload.
+"tests/*.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"

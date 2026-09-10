@@ -16,3 +16,10 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+
+# Local quality reports and tool caches
+.quality/
+.ruff_cache/
+.pytest_cache/
+
+.venv-dev/

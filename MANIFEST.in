@@ -1,0 +1,6 @@
+include LICENSE NOTICE.md *.md Makefile pyproject.toml
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include .github *.yml *.yaml *.md
+recursive-exclude * __pycache__ *.py[cod]
+global-exclude settings.local.json

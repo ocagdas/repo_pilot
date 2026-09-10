@@ -13,17 +13,36 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-import tempfile
 from typing import Any, Iterable
-from settings import bootstrap_config, SettingsError
+
+if __package__:
+    from .settings import bootstrap_config, SettingsError
+    from .bootstrap_validation import BootstrapError, load_config, branch_layout
+    from .knowledge_state import (
+        atomic_json,
+        atomic_text,
+        read_json,
+        stable_hash,
+        load_state,
+        load_file_index,
+        validate_request,
+    )
+else:
+    from settings import bootstrap_config, SettingsError
+    from bootstrap_validation import BootstrapError, load_config, branch_layout
+    from knowledge_state import (
+        atomic_json,
+        atomic_text,
+        read_json,
+        stable_hash,
+        load_state,
+        load_file_index,
+        validate_request,
+    )
 
 
 SCRIPT_PATH = Path(__file__).resolve()
 DEFAULT_CONFIG = SCRIPT_PATH.parent.parent / "bootstrap.json"
-
-
-class BootstrapError(RuntimeError):
-    pass
 
 
 def run_git(repo: Path, args: list[str], check: bool = True) -> bytes:
@@ -48,42 +67,6 @@ def repository_root(candidate: Path) -> Path:
     return Path(output).resolve()
 
 
-def load_config(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as handle:
-        config = json.load(handle)
-    if config.get("schema_version") != "1.0":
-        raise BootstrapError("Unsupported bootstrap configuration schema")
-    return config
-
-
-def atomic_json(path: Path, value: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=path.parent, delete=False
-    ) as handle:
-        json.dump(value, handle, indent=2, sort_keys=True)
-        handle.write("\n")
-        temporary = Path(handle.name)
-    temporary.replace(path)
-
-
-def atomic_text(path: Path, value: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=path.parent, delete=False
-    ) as handle:
-        handle.write(value)
-        temporary = Path(handle.name)
-    temporary.replace(path)
-
-
-def read_json(path: Path) -> Any | None:
-    if not path.is_file():
-        return None
-    with path.open(encoding="utf-8") as handle:
-        return json.load(handle)
-
-
 def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -94,11 +77,6 @@ def sha256_file(path: Path) -> str:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
-
-
-def stable_hash(value: Any) -> str:
-    data = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return sha256_bytes(data)
 
 
 def branch_name(repo: Path, explicit: str | None) -> str:
@@ -208,9 +186,7 @@ def parse_name_status(data: bytes) -> list[dict[str, str]]:
                 raise BootstrapError("Invalid Git rename or copy record")
             old_path, new_path = tokens[index], tokens[index + 1]
             index += 2
-            changes.append(
-                {"status": status, "old_path": old_path, "path": new_path}
-            )
+            changes.append({"status": status, "old_path": old_path, "path": new_path})
         else:
             if index >= len(tokens):
                 raise BootstrapError("Invalid Git change record")
@@ -226,9 +202,7 @@ def committed_changes(repo: Path, base: str, target: str = "HEAD") -> list[dict[
 
 def worktree_changes(repo: Path) -> list[dict[str, str]]:
     changes = parse_name_status(run_git(repo, ["diff", "--name-status", "-z", "-M", "--"]))
-    changes.extend(
-        parse_name_status(run_git(repo, ["diff", "--cached", "--name-status", "-z", "-M", "--"]))
-    )
+    changes.extend(parse_name_status(run_git(repo, ["diff", "--cached", "--name-status", "-z", "-M", "--"])))
     untracked = run_git(repo, ["ls-files", "--others", "--exclude-standard", "-z"])
     for path in untracked.decode("utf-8", errors="surrogateescape").split("\0"):
         if path:
@@ -286,9 +260,7 @@ def tracked_and_untracked_files(repo: Path, config: dict[str, Any]) -> list[str]
         {
             path
             for path in paths
-            if path
-            and selected_path(path, config)
-            and ((repo / path).is_file() or (repo / path).is_symlink())
+            if path and selected_path(path, config) and ((repo / path).is_file() or (repo / path).is_symlink())
         }
     )
 
@@ -400,11 +372,7 @@ def semantic_index_status(
     if mode not in {"disabled", "auto", "required"}:
         raise BootstrapError(f"Unsupported semantic index mode: {mode}")
     compile_database = next(
-        (
-            repo / candidate
-            for candidate in semantic["compile_database_candidates"]
-            if (repo / candidate).is_file()
-        ),
+        (repo / candidate for candidate in semantic["compile_database_candidates"] if (repo / candidate).is_file()),
         None,
     )
     manifest_paths = {
@@ -424,10 +392,14 @@ def semantic_index_status(
             continue
         try:
             manifest = read_json(path)
-        except (OSError, json.JSONDecodeError) as error:
+        except (BootstrapError, OSError, json.JSONDecodeError) as error:
             incompatible_layers[name] = f"invalid_manifest: {error}"
             continue
-        if not isinstance(manifest, dict) or not isinstance(manifest.get("validation"), dict) or not isinstance(manifest.get("trust"), dict):
+        if (
+            not isinstance(manifest, dict)
+            or not isinstance(manifest.get("validation"), dict)
+            or not isinstance(manifest.get("trust"), dict)
+        ):
             incompatible_layers[name] = "invalid_manifest_types"
             continue
         required_fields = {
@@ -489,7 +461,6 @@ def semantic_index_status(
     current_view_complete = query_configured and not missing_layers
     fallback_needed = not current_view_complete
 
-
     if mode == "disabled":
         reason = "semantic_index_disabled"
     elif incompatible_layers and not existing_layers:
@@ -542,13 +513,24 @@ def build_candidate_index(
     head: str,
     fingerprint: str,
 ) -> dict[str, Any]:
-    # Reconcile the current inventory, including reversions of previously analysed
-    # dirty files. A diff against HEAD alone cannot describe those reversions.
-    files = {path: file_record(repo, path) for path in tracked_and_untracked_files(repo, config)}
+    current_paths = set(tracked_and_untracked_files(repo, config))
+    dirty = relevant_changes(worktree_changes(repo), config)
+    dirty_paths = sorted({item[key] for item in dirty for key in ("path", "old_path") if key in item})
+    before = {item["path"]: item for item in previous_index.get("files", [])} if previous_index else {}
+    # Old indices lack dirty-path provenance: refresh once rather than risk missing a reversion.
+    reusable = mode == "incremental_analysis" and previous_index is not None and "dirty_paths" in previous_index
+    affected = {item[key] for item in changes for key in ("path", "old_path") if key in item}
+    affected.update(dirty_paths)
+    affected.update(previous_index.get("dirty_paths", []) if previous_index else [])
+    files = {
+        path: before[path] if reusable and path in before and path not in affected else file_record(repo, path)
+        for path in current_paths
+    }
     return {
         "schema_version": "1.0",
         "source_commit": head,
         "worktree_fingerprint": fingerprint,
+        "dirty_paths": dirty_paths,
         "files": [files[path] for path in sorted(files)],
     }
 
@@ -603,48 +585,32 @@ def render_delta_markdown(delta: dict[str, Any]) -> str:
 
 def effective_config(args, repo):
     """Resolve project configuration identically for prepare, complete and status."""
-    project_config = repo / 'ai_workflow/bootstrap.json'
+    project_config = repo / "ai_workflow/bootstrap.json"
     if args.config:
         config_path = Path(args.config).resolve()
     elif project_config.exists() or project_config.is_symlink():
         config_path = project_config
     else:
         config_path = DEFAULT_CONFIG
-    knowledge = {key: value for key, value in (
-        ('mode', getattr(args, 'knowledge_mode', None)),
-        ('backend', getattr(args, 'knowledge_backend', None))) if value is not None}
-    return bootstrap_config(load_config(config_path), repo, getattr(args, 'user_config', None),
-                            {'knowledge': knowledge})
-
-
-def prepare(args: argparse.Namespace) -> dict[str, Any]:
-    repo = repository_root(Path(args.repo))
-    config = effective_config(args, repo)
-    config_fingerprint = stable_hash(config)
-    head = head_commit(repo)
-    branch = branch_name(repo, args.branch)
-    selected = branch_selected(branch, config)
-    state_root = branch_state_root(repo, branch, selected, config)
-    state_path = state_root / "state.json"
-    pending_path = state_root / config["analysis"]["pending_request_file"]
-    candidate_path = state_root / "candidate_file_index.json"
-    previous_state = read_json(state_path)
-    worktree = relevant_changes(worktree_changes(repo), config)
-    fingerprint = current_fingerprint(repo, head, worktree)
-
-    unchanged = bool(
-        previous_state
-        and previous_state.get("config_fingerprint") == config_fingerprint
-        and previous_state.get("source_commit") == head
-        and previous_state.get("worktree_fingerprint") == fingerprint
-        and (state_root / config["analysis"]["repository_analysis_file"]).is_file()
-        and (state_root / config["analysis"]["file_index_file"]).is_file()
+    knowledge = {
+        key: value
+        for key, value in (
+            ("mode", getattr(args, "knowledge_mode", None)),
+            ("backend", getattr(args, "knowledge_backend", None)),
+        )
+        if value is not None
+    }
+    return bootstrap_config(
+        load_config(config_path), repo, getattr(args, "user_config", None), {"knowledge": knowledge}
     )
 
-    if args.force_full or previous_state is None:
+
+def choose_analysis(repo, config, previous_state, config_fingerprint, head, worktree, unchanged, force_full):
+    """Choose analysis scope without writing any cache files."""
+    if force_full or previous_state is None:
         mode = "full_analysis"
         changes = []
-        reasons = ["forced" if args.force_full else "knowledge_state_missing"]
+        reasons = ["forced" if force_full else "knowledge_state_missing"]
     elif previous_state.get("config_fingerprint") != config_fingerprint:
         mode, changes, reasons = "full_analysis", [], ["configuration_changed"]
     elif unchanged:
@@ -653,7 +619,11 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         reasons = []
     else:
         previous_commit = previous_state.get("source_commit", "")
-        if not previous_commit or not revision_exists(repo, previous_commit) or not is_ancestor(repo, previous_commit, head):
+        if (
+            not previous_commit
+            or not revision_exists(repo, previous_commit)
+            or not is_ancestor(repo, previous_commit, head)
+        ):
             mode = "full_analysis"
             changes = []
             reasons = ["previous_index_is_not_a_current_ancestor"]
@@ -668,24 +638,16 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
                 mode = "incremental_analysis"
                 reasons = ["repository_changed"]
 
-    base_ref = resolve_base_ref(repo, args.base_ref, config)
-    merge_base = git_text(repo, ["merge-base", base_ref, "HEAD"], False) if base_ref else ""
-    committed_branch_changes = relevant_changes(committed_changes(repo, merge_base), config) if merge_base else []
-    branch_changes = merge_changes([*committed_branch_changes, *worktree])
-    base_root = (
-        repo
-        / config["state_directory"]
-        / config["layer_storage"]["base_directory"]
-        / branch_key(base_ref or "unresolved")
-        / (merge_base or "unresolved")
-    )
-    branch_overlay_root = state_root / config["layer_storage"]["branch_overlay_directory"]
-    worktree_overlay_root = state_root / config["layer_storage"]["worktree_overlay_directory"]
-    layers = {
-        "base": base_root,
-        "branch_overlay": branch_overlay_root,
-        "worktree_overlay": worktree_overlay_root,
-    }
+    return mode, changes, reasons
+
+
+def write_inventory_layers(
+    repo, config, config_fingerprint, layers, merge_base, head, committed_branch_changes, worktree
+):
+    """Persist immutable base inventory and current branch/worktree overlays."""
+    base_root = layers["base"]
+    branch_overlay_root = layers["branch_overlay"]
+    worktree_overlay_root = layers["worktree_overlay"]
     if merge_base:
         base_index_path = base_root / f"file_index_{config_fingerprint[:16]}.json"
         if not base_index_path.is_file():
@@ -697,6 +659,70 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     atomic_json(
         worktree_overlay_root / "file_overlay.json",
         overlay_file_index(repo, worktree, None),
+    )
+
+
+def prepare(args: argparse.Namespace) -> dict[str, Any]:
+    repo = repository_root(Path(args.repo))
+    object_format = git_text(repo, ["rev-parse", "--show-object-format"])
+    config = effective_config(args, repo)
+    config_fingerprint = stable_hash(config)
+    head = head_commit(repo)
+    branch = branch_name(repo, args.branch)
+    selected = branch_selected(branch, config)
+    state_root = branch_state_root(repo, branch, selected, config)
+    layout = branch_layout(config, state_root)
+    state_path = layout["state"]
+    pending_path = layout["pending_request_file"]
+    candidate_path = layout["candidate"]
+    previous_state = load_state(state_path, object_format)
+    if previous_state and "file_index_digest" not in previous_state:
+        previous_state = None  # Refresh pre-integrity caches once.
+    worktree = relevant_changes(worktree_changes(repo), config)
+    fingerprint = current_fingerprint(repo, head, worktree)
+
+    unchanged = bool(
+        previous_state
+        and previous_state.get("config_fingerprint") == config_fingerprint
+        and previous_state.get("source_commit") == head
+        and previous_state.get("worktree_fingerprint") == fingerprint
+        and (layout["repository_analysis_file"]).is_file()
+        and (layout["file_index_file"]).is_file()
+    )
+
+    mode, changes, reasons = choose_analysis(
+        repo, config, previous_state, config_fingerprint, head, worktree, unchanged, args.force_full
+    )
+
+    # Only compatible caches are candidates for reuse. Configuration changes,
+    # forced rebuilds and ancestry invalidation must not inspect the new layout
+    # using old integrity metadata.
+    previous_index = None
+    if mode != "full_analysis":
+        previous_index = load_file_index(layout["file_index_file"], object_format)
+        if previous_index is None or stable_hash(previous_index) != previous_state["file_index_digest"]:
+            raise BootstrapError("Saved file index changed; run prepare --force-full")
+
+    base_ref = resolve_base_ref(repo, args.base_ref, config)
+    merge_base = git_text(repo, ["merge-base", base_ref, "HEAD"], False) if base_ref else ""
+    committed_branch_changes = relevant_changes(committed_changes(repo, merge_base), config) if merge_base else []
+    branch_changes = merge_changes([*committed_branch_changes, *worktree])
+    base_root = (
+        repo
+        / config["state_directory"]
+        / config["layer_storage"]["base_directory"]
+        / branch_key(base_ref or "unresolved")
+        / (merge_base or "unresolved")
+    )
+    branch_overlay_root = layout["branch_overlay_directory"]
+    worktree_overlay_root = layout["worktree_overlay_directory"]
+    layers = {
+        "base": base_root,
+        "branch_overlay": branch_overlay_root,
+        "worktree_overlay": worktree_overlay_root,
+    }
+    write_inventory_layers(
+        repo, config, config_fingerprint, layers, merge_base, head, committed_branch_changes, worktree
     )
     changed_headers = [item["path"] for item in branch_changes if change_is_header(item, config)]
     branch_delta = {
@@ -712,8 +738,8 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         "changed_headers": changed_headers,
         "global_invalidation": any(change_has_global_invalidation(item, config) for item in branch_changes),
     }
-    atomic_json(state_root / config["analysis"]["branch_delta_data_file"], branch_delta)
-    atomic_text(state_root / config["analysis"]["branch_delta_file"], render_delta_markdown(branch_delta))
+    atomic_json(layout["branch_delta_data_file"], branch_delta)
+    atomic_text(layout["branch_delta_file"], render_delta_markdown(branch_delta))
     semantic_status = semantic_index_status(
         repo,
         config,
@@ -753,20 +779,20 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
             "branch": branch,
             "source_commit": head,
             "state_directory": str(state_root.relative_to(repo)),
-            "branch_delta": str((state_root / config["analysis"]["branch_delta_file"]).relative_to(repo)),
+            "branch_delta": str((layout["branch_delta_file"]).relative_to(repo)),
             "shared_publish_allowed": layer_output["publish_matching_branch_overlay"],
             "layers": layer_output,
             "semantic_index": semantic_status,
         }
 
-    previous_index = read_json(state_root / config["analysis"]["file_index_file"])
     candidate = build_candidate_index(repo, config, mode, previous_index, changes, head, fingerprint)
     if previous_index is not None and mode == "incremental_analysis":
         before = {item["path"]: item for item in previous_index.get("files", [])}
         after = {item["path"]: item for item in candidate.get("files", [])}
         changes = [
             {"path": path, "status": "D" if path not in after else "A" if path not in before else "M"}
-            for path in sorted(before.keys() | after.keys()) if before.get(path) != after.get(path)
+            for path in sorted(before.keys() | after.keys())
+            if before.get(path) != after.get(path)
         ]
         if any(change_has_global_invalidation(item, config) for item in changes):
             mode, reasons = "full_analysis", ["global_invalidation"]
@@ -776,7 +802,7 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         and previous_index is not None
         and stable_hash(previous_index.get("files", [])) == stable_hash(candidate.get("files", []))
     ):
-        final_index = state_root / config["analysis"]["file_index_file"]
+        final_index = layout["file_index_file"]
         atomic_json(final_index, candidate)
         refreshed_state = dict(previous_state)
         refreshed_state.update(
@@ -784,6 +810,7 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
                 "source_commit": head,
                 "worktree_fingerprint": fingerprint,
                 "analysis_mode": "metadata_refresh",
+                "file_index_digest": stable_hash(candidate),
                 "file_index": str(final_index.relative_to(repo)),
                 "completed_at": dt.datetime.now(dt.timezone.utc).isoformat(),
             }
@@ -800,14 +827,14 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
             "branch": branch,
             "source_commit": head,
             "state_directory": str(state_root.relative_to(repo)),
-            "branch_delta": str((state_root / config["analysis"]["branch_delta_file"]).relative_to(repo)),
+            "branch_delta": str((layout["branch_delta_file"]).relative_to(repo)),
             "shared_publish_allowed": layer_output["publish_matching_branch_overlay"],
             "layers": layer_output,
             "semantic_index": semantic_status,
         }
     request_id = f"{head[:12]}_{fingerprint[:12]}"
-    delta_output = state_root / config["analysis"]["delta_directory"] / f"{request_id}.md"
-    repository_analysis = state_root / config["analysis"]["repository_analysis_file"]
+    delta_output = layout["delta_directory"] / f"{request_id}.md"
+    repository_analysis = layout["repository_analysis_file"]
     required_outputs = [repository_analysis]
     if mode == "incremental_analysis":
         required_outputs.append(delta_output)
@@ -827,8 +854,9 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         "previous_source_commit": previous_state.get("source_commit") if previous_state else None,
         "state_directory": str(state_root.relative_to(repo)),
         "candidate_file_index": str(candidate_path.relative_to(repo)),
-        "branch_delta": str((state_root / config["analysis"]["branch_delta_file"]).relative_to(repo)),
-        "branch_delta_data": str((state_root / config["analysis"]["branch_delta_data_file"]).relative_to(repo)),
+        "candidate_digest": stable_hash(candidate),
+        "branch_delta": str((layout["branch_delta_file"]).relative_to(repo)),
+        "branch_delta_data": str((layout["branch_delta_data_file"]).relative_to(repo)),
         "changed_paths": changes,
         "changed_headers": [item["path"] for item in changes if change_is_header(item, config)],
         "dependency_closure_required": any(change_is_header(item, config) for item in changes),
@@ -841,14 +869,17 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
 
 def complete(args: argparse.Namespace) -> dict[str, Any]:
     repo = repository_root(Path(args.repo))
+    object_format = git_text(repo, ["rev-parse", "--show-object-format"])
     config = effective_config(args, repo)
     branch = branch_name(repo, args.branch)
     selected = branch_selected(branch, config)
     state_root = branch_state_root(repo, branch, selected, config)
-    pending_path = state_root / config["analysis"]["pending_request_file"]
+    layout = branch_layout(config, state_root)
+    pending_path = layout["pending_request_file"]
     request = read_json(pending_path)
     if request is None:
         raise BootstrapError("No pending analysis request exists for this branch")
+    validate_request(request, pending_path, repo, layout, branch, object_format)
     if request.get("config_fingerprint") != stable_hash(config):
         raise BootstrapError("Configuration changed after preparation; run prepare again")
     head = head_commit(repo)
@@ -863,11 +894,17 @@ def complete(args: argparse.Namespace) -> dict[str, Any]:
             missing.append(relative)
     if missing:
         raise BootstrapError(f"Required analysis outputs are missing or empty: {', '.join(missing)}")
-    candidate_path = repo / request["candidate_file_index"]
-    candidate = read_json(candidate_path)
+    candidate_path = layout["candidate"]
+    candidate = load_file_index(candidate_path, object_format)
     if candidate is None:
         raise BootstrapError("Candidate file index is missing")
-    final_index = state_root / config["analysis"]["file_index_file"]
+    if (
+        candidate.get("source_commit") != head
+        or candidate.get("worktree_fingerprint") != fingerprint
+        or stable_hash(candidate) != request["candidate_digest"]
+    ):
+        raise BootstrapError("Candidate index changed after preparation; run prepare again")
+    final_index = layout["file_index_file"]
     atomic_json(final_index, candidate)
     state = {
         "schema_version": "1.0",
@@ -877,11 +914,12 @@ def complete(args: argparse.Namespace) -> dict[str, Any]:
         "request_id": request["request_id"],
         "config_fingerprint": request["config_fingerprint"],
         "analysis_mode": request["action_required"],
+        "file_index_digest": stable_hash(candidate),
         "repository_analysis": request["required_analysis_outputs"][0],
         "file_index": str(final_index.relative_to(repo)),
         "completed_at": dt.datetime.now(dt.timezone.utc).isoformat(),
     }
-    atomic_json(state_root / "state.json", state)
+    atomic_json(layout["state"], state)
     pending_path.unlink()
     if candidate_path.exists():
         candidate_path.unlink()
@@ -897,11 +935,13 @@ def complete(args: argparse.Namespace) -> dict[str, Any]:
 
 def status(args: argparse.Namespace) -> dict[str, Any]:
     repo = repository_root(Path(args.repo))
+    object_format = git_text(repo, ["rev-parse", "--show-object-format"])
     config = effective_config(args, repo)
     branch = branch_name(repo, args.branch)
     selected = branch_selected(branch, config)
     state_root = branch_state_root(repo, branch, selected, config)
-    state = read_json(state_root / "state.json")
+    layout = branch_layout(config, state_root)
+    state = load_state(layout["state"], object_format)
     head = head_commit(repo)
     worktree = relevant_changes(worktree_changes(repo), config)
     fingerprint = current_fingerprint(repo, head, worktree)
@@ -910,6 +950,7 @@ def status(args: argparse.Namespace) -> dict[str, Any]:
         and state.get("source_commit") == head
         and state.get("config_fingerprint") == stable_hash(config)
         and state.get("worktree_fingerprint") == fingerprint
+        and state.get("file_index_digest") == stable_hash(load_file_index(layout["file_index_file"], object_format))
     )
     return {
         "schema_version": "1.0",
@@ -938,8 +979,8 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
-def main() -> int:
-    args = parser().parse_args()
+def main(argv=None) -> int:
+    args = parser().parse_args(argv)
     try:
         if args.command == "prepare":
             result = prepare(args)

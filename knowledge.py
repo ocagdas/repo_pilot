@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Distribution entry point for optional knowledge backends."""
-from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent / 'project/ai_workflow/tools'))
-from knowledge_backend import main
+"""Distribution entry point for knowledge_backend."""
 
-if __name__ == '__main__':
+if __package__:
+    from .project.ai_workflow.tools.knowledge_backend import main
+else:
+    from project.ai_workflow.tools.knowledge_backend import main
+
+if __name__ == "__main__":
     raise SystemExit(main())

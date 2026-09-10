@@ -102,3 +102,9 @@ See [KNOWLEDGE_SOLUTIONS.md](KNOWLEDGE_SOLUTIONS.md) for the sourced backend sho
 See VALIDATION.md for checks actually performed. The pack does not include a compiler index engine, authenticated shared index publication, an automatic multi agent runner or a hardware test system. Optional adapters and real project commands still need configuration. The next pilot should use a representative C++ change and Python pipeline with two agent clients and real CI evidence.
 
 Optional CodeGraphContext and Sourcegraph retrieval now has a default-off selector, bounded queries and CGC bundle transfer. See [backend setup and sharing](project/ai_workflow/knowledge_backends.md).
+
+## Open-source participation and quality gates
+
+Repo Pilot is MIT-licensed; see [LICENSE](LICENSE) and [third-party notices](NOTICE.md). Contributions and bug reports are welcome: start with [CONTRIBUTING.md](CONTRIBUTING.md), [SUPPORT.md](SUPPORT.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [SECURITY.md](SECURITY.md).
+
+Run `python scripts/check.py` for local formatting, analysis, contract and unit checks. [CI.md](CI.md) documents strict integration checks, machine-readable go/no-go results, branch-protection setup and validated release artifacts. Hosted workflows are supplied; remote success is recorded only after a real run.

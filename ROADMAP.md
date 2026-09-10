@@ -139,7 +139,7 @@ Exit: demonstrate release/RC feature branches across two clones and two machines
 
 ### Phase 5 — CI publication and team consumption
 
-Status: Planned. A repository regression CI workflow is also absent and tracked separately in IMPLEMENTATION_PLAN.md.
+Status: Planned. Repository regression CI and release-readiness workflows are implemented separately; see CI.md and IMPLEMENTATION_PLAN.md. Hosted execution/enforcement still needs confirmation.
 
 Deliver scheduled/event-driven generation, immutable publication, discovery, authenticated fetching, integrity checks, and historical retention.
 
