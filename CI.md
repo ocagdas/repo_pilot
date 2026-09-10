@@ -54,11 +54,13 @@ The `quality-gate` artifact contains `ci-gate.json` with the shared schema:
 ## Release candidates
 
 ```bash
+python scripts/build_release.py --candidate
+# On a clean checkout of an existing annotated release tag:
 python scripts/build_release.py --tag v1.1.0
 python scripts/build_release.py --verify-only
 ```
 
-The build command requires empty output, verifies tag/version consistency when a tag is supplied, builds one wheel and one source distribution, validates metadata with Twine, checks wheel licenses/payload, installs the wheel in a disposable environment, and writes `SHA256SUMS`. Build defaults to `.quality/release`; choose another directory with `--output`. A manifest detects changed bytes; it does not authenticate an arbitrary publisher.
+The build command requires empty output, verifies tag/version consistency when a tag is supplied, builds one wheel and one source distribution, validates metadata with Twine, checks wheel licenses/payload, installs the wheel in a disposable environment, and writes checksummed `provenance.json` and `SHA256SUMS`. Build defaults to `.quality/release`; choose another directory with `--output`. A manifest detects changed bytes; it does not authenticate an arbitrary publisher.
 
 The **Release readiness** workflow runs on version tags or manual dispatch, reuses the entire CI gate and uploads a validated release candidate only after GO. It prepares distribution artifacts; it does not create public releases, upload to PyPI, change versions, move tags or deploy automatically. Publication can consume these artifacts behind the team's protected environment. Tag names must match both `pyproject.toml` and `upstream.lock.json`.
 
@@ -69,3 +71,12 @@ Enable GitHub private vulnerability reporting so the route in SECURITY.md works.
 See VALIDATION.md for what actually ran. A workflow committed locally is readiness evidence, not a successful remote CI run or verified Windows/macOS support.
 
 Automatic patch versioning and annotated tags are implemented after the main quality gate. See [VERSIONING.md](VERSIONING.md) for policy, maintainer commands, GitHub App setup and recovery. The App credentials and repository rules must be configured before hosted automation can publish.
+
+The local/hosted quality gate also runs the shared 1.0.0 CLI conformance suite. Candidate builds are explicit; tagged builds require a clean exact annotated tag. See docs/development/repository-standard-design.md and standards/repository/v1 for schemas and adapter rules.
+
+Shared conformance is mandatory in the static/local gate. The canonical verify-release.yml
+checks downloaded release identity before installation; see VERSIONING.md for each
+product's publication/verification activation. All external Actions are pinned.
+
+Follow [BRANCHING.md](BRANCHING.md) for the shared trunk/dev branch convention,
+version/tag rules and REPOSITORY_VERSIONING_ENABLED activation setting.

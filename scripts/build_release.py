@@ -13,7 +13,18 @@ import tarfile
 import tomllib
 import zipfile
 
+if __package__:
+    from . import version as versioning
+else:
+    import version as versioning
+
 ROOT = Path(__file__).resolve().parents[1]
+
+
+try:
+    from scripts.repository_provenance import write_provenance, verify_provenance
+except ModuleNotFoundError:
+    from repository_provenance import write_provenance, verify_provenance
 
 
 def verify_manifest(directory):
@@ -36,27 +47,41 @@ def verify_manifest(directory):
             raise ValueError("Invalid checksum manifest entry")
         entries[name] = digest
     artifacts = {p.name for p in directory.glob("*.whl")} | {p.name for p in directory.glob("*.tar.gz")}
-    if len(artifacts) != 2 or set(entries) != artifacts:
+    if len(artifacts) != 2 or set(entries) != artifacts | {"provenance.json"}:
         raise ValueError("Expected exactly one wheel and one source distribution in manifest")
     if len(list(directory.glob("*.whl"))) != 1 or len(list(directory.glob("*.tar.gz"))) != 1:
         raise ValueError("Release artifact types are incomplete")
-    if {p.name for p in paths} != artifacts | {"SHA256SUMS"}:
+    if {p.name for p in paths} != artifacts | {"SHA256SUMS", "provenance.json"}:
         raise ValueError("Unexpected files in release artifact set")
     for name, expected in entries.items():
         if hashlib.sha256((directory / name).read_bytes()).hexdigest() != expected:
             raise ValueError(f"Checksum mismatch: {name}")
+    value = json.loads((directory / "provenance.json").read_text(encoding="utf-8"))
+    verify_provenance(value, {name: entries[name] for name in artifacts})
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / ".quality/release")
-    parser.add_argument("--tag", help="Require vVERSION to match both package version files")
+    kind = parser.add_mutually_exclusive_group()
+    kind.add_argument("--tag", help="Build from a clean, exact annotated vVERSION tag")
+    kind.add_argument("--candidate", action="store_true", help="Build a development snapshot without release claims")
     parser.add_argument("--verify-only", action="store_true")
     args = parser.parse_args(argv)
     output = args.output.resolve()
     if args.verify_only:
         verify_manifest(output)
         return 0
+    if not args.tag and not args.candidate:
+        raise ValueError("Select --candidate or --tag; builds never imply publication")
+    commit = versioning.git("rev-parse", "HEAD")
+    dirty = bool(versioning.git("status", "--porcelain"))
+    if args.tag and (
+        dirty
+        or versioning.tag_commit(args.tag) != commit
+        or versioning.git("cat-file", "-t", f"refs/tags/{args.tag}") != "tag"
+    ):
+        raise ValueError("Release builds require a clean checkout of the exact annotated tag")
     version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
     pin = json.loads((ROOT / "upstream.lock.json").read_text(encoding="utf-8"))
     if pin["package_version"] != version or (args.tag and args.tag != "v" + version):
@@ -90,6 +115,11 @@ def main(argv=None):
             "REPOSITORY_STRUCTURE.md",
             "TODO.md",
             "scripts/version.py",
+            "repository-standard.json",
+            "standards/repository/v1/bundle.json",
+            "standards/repository/v1/contract.json",
+            "scripts/check_repository_standard.py",
+            "scripts/verify_quality_evidence.py",
             "scripts/publish_version.py",
             ".github/workflows/version.yml",
         }
@@ -114,8 +144,10 @@ def main(argv=None):
             capture_output=True,
             timeout=60,
         )
+    write_provenance(output, version=version, commit=commit, tag=args.tag, dirty=dirty)
     manifest = "".join(
-        hashlib.sha256(path.read_bytes()).hexdigest() + "  " + path.name + "\n" for path in sorted(wheels + sources)
+        hashlib.sha256(path.read_bytes()).hexdigest() + "  " + path.name + "\n"
+        for path in sorted(wheels + sources + [output / "provenance.json"])
     )
     (output / "SHA256SUMS").write_text(manifest, encoding="utf-8")
     verify_manifest(output)

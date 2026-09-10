@@ -18,7 +18,7 @@ jobs:
   publish:
     name: Version and tag trunk
     if: >-
-      github.event_name == 'push' && github.workflow == 'CI' &&
+      vars.REPOSITORY_VERSIONING_ENABLED == 'true' && github.event_name == 'push' && github.workflow == 'CI' &&
       github.ref == format('refs/heads/{0}', inputs.trunk) && github.sha == inputs.source
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -238,3 +238,10 @@ TODO.md owns open tasks; docs/development/knowledge-design.md replaces the forme
 implementation backlog. CI's required jobs are quality, unit, integration and artifacts.
 Version mutation is a gated reusable version.yml with existing REPO_PILOT_VERSIONING_*
 credentials and a configurable trunk. classify-release always returns publish=false.
+
+## Versioned executable contract
+
+The authoritative 1.0.0 behavior, adapter boundaries and migration sequence are in [repository-standard design](docs/development/repository-standard-design.md). `standards/repository/v1/contract.json` and the adjacent JSON schemas are checked by `scripts/check_repository_standard.py`; `repository-standard.json` owns this repository's adapter values. In case of older overview wording, the versioned design and conformance fixtures govern.
+
+Follow [BRANCHING.md](BRANCHING.md) for the shared trunk/dev branch convention,
+version/tag rules and REPOSITORY_VERSIONING_ENABLED activation setting.

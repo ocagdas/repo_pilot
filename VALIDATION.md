@@ -1,6 +1,84 @@
 # Validation record
 
-## Current snapshot: repository standardization, 10 September 2026
+## Final branch and consolidation review — 10 September 2026
+
+Full quality gate passed: 149 tests, no skips (117 repository + 32 consumer). Log: /tmp/unified-policy-rp-full.log.
+
+Final shared conformance, including master trunk selection and wrong-target rejection,
+passed in all three repositories. Workflow actionlint and git diff whitespace checks
+passed. The shared bundle is byte-identical; digest: `ad0044680cd3883efef6b358b8aa294554aa95a74f8016d4154d9339a9a28279`.
+Aiplane's clean runner preserves real profiles and cleans temporary directories;
+workflow regression tests cover failed PR lookup and per-artifact attestation loops.
+
+GitHub readback confirms main/main/master trunks, active Quality gate and immutable
+version-tag rules plus squash-only merges in Repo Pilot/aiplane. ACF remains private
+on master; its plan denies private rulesets and repository-settings changes require
+owner/admin access. Versioning is enabled only for aiplane; Repo Pilot/ACF need App
+setup before enabling it. This supersedes earlier statements that no hosted settings
+were changed. No real commits, pushes, branch renames, tags, secrets or releases were
+created by this work. Current-candidate hosted CI, live App publication and hosted
+attestation qualification remain outstanding. See docs/development/github-policy-setup.md.
+
+## Current release consolidation evidence — 10 September 2026
+
+Pending local working-tree delta. Real repository versions and refs were unchanged;
+commits/tags/pushes in tests targeted disposable local fixtures only. Shared code,
+provenance, conformance and post-publication verification are now integrated in all
+three repositories; this supersedes earlier statements about pending adapter migration.
+
+- Full `scripts/check.py --full` with the provisioned toolchain environment: **149
+  tests passed, no skips** (117 repository + 32 consumer tests), full-profile GO.
+  Log: /tmp/rp-release-full.log.
+- Real wheel/source build from a clean annotated-tag fixture, common provenance and
+  selected-tag/commit verification, isolated installed CLI/config inspection and
+  consumer-resource checks passed. Log: /tmp/rp-release-artifacts.log.
+
+All three pass shared conformance (including immutable bundle hashes, failed/skipped/
+missing gate cases, classification, reruns and advanced-tip publication), actionlint
+1.7.12 workflow structure/expression checks, and scoped formatting/lint. Documentation
+and final gate wiring were checked after the artifact builds. Installed release assets
+were local fixtures; no actual hosted download, attestation, App mutation, ruleset,
+Windows/macOS run or release publication occurred. Hosted qualification remains open.
+
+Earlier evidence below retains its original scope and does not supersede this entry.
+
+## Current snapshot: shared contract and community alignment, 10 September 2026
+
+Pending working-tree delta on e61036d13fba04a4b5a3ac252db42fad4e6e6702. Package version
+remains 1.1.0 and the official Spec Kit pin remains v1.0.4. The shared bundle is
+reviewed-copy material, not a committed release or a sibling runtime dependency.
+
+Executed on Linux with /tmp/repo-pilot-graph-validation/bin/python:
+
+- `scripts/check.py --full`, with .quality/toolchains/environment.json: **148 tests
+  passed, no skips** (116 repository and 32 consumer bootstrap tests), full-profile
+  GO. Includes Ruff formatting/analysis, document contracts and common conformance.
+  Log: /tmp/repo-pilot-shared-final.log.
+- Common conformance passed bundle integrity, schema/CLI/gate cases, context-independent
+  classification, tagged reruns and atomic publication/advanced-tip behavior in disposable
+  local Git fixtures. Schema and evidence tests reject ambiguous types and wrong identities.
+- Explicit candidate and clean annotated-tag wheel/source builds passed Twine, payload
+  and source inclusions, clean wheel installation, common provenance schema and complete
+  checksum membership. Tags were created only in the disposable fixture. Artifacts:
+  /tmp/repo-pilot-contract-final-candidate and /tmp/repo-pilot-contract-final-release;
+  log: /tmp/repo-pilot-contract-final-builds.log. Subsequent documentation-only evidence
+  updates do not change the qualified build implementation.
+- All three repositories passed canonical document presence, exact shared GitHub/conduct
+  parity, maintained Markdown local-link checks, actionlint 1.7.12 structural/expression
+  checks and git diff --check. Aiplane's affected documentation contract suite passed
+  **38 tests**; its full product suite was not rerun. ACF focused build/gate/version/
+  publication tests passed **61 tests** in its provisioned environment; a disposable
+  metadata build verified proprietary license expression and license/notice inclusion,
+  without claiming standalone wheel runtime qualification.
+
+See [the tree/content audit](docs/development/repository-standard-audit.md) for retained
+product differences and [the design](docs/development/repository-standard-design.md)
+for the frozen common interface. The replacement parent handoff specifies remaining
+sibling adapter migration; these checks do not certify that migration as complete.
+No hosted CI/App publication, branch-rule changes, real tags, public/private releases,
+Windows/macOS execution, live providers/media or new token benchmarks were performed.
+
+## Previous snapshot: initial repository standardization, 10 September 2026
 
 Tested the working-tree standardization delta on base commit `89947a155de6c2f81f76bf51bbc397233e184871`; this is not a committed release revision. Read the sibling handoff and AI Content Factory's shared contract/reference helpers. The reference checkout was at `e5ab754f2e26470ca1ce68dd0eaa8c4c92efee01` with staged standardization changes, so that commit alone does not identify the borrowed working-tree implementation. Repo Pilot contains local adapters, not a dependency on sibling paths, and no sibling migration/hosted success is asserted.
 

@@ -13,4 +13,4 @@ format:
 lint:
 	$(PYTHON) -m ruff check .
 build:
-	$(PYTHON) scripts/build_release.py
+	$(PYTHON) scripts/build_release.py --candidate

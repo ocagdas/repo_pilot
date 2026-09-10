@@ -1,5 +1,2 @@
+# Sensitive reports follow SECURITY.md; no enabled hosting feature is assumed.
 blank_issues_enabled: true
-contact_links:
-  - name: Private security report
-    url: https://github.com/ocagdas/repo_pilot/security/advisories/new
-    about: Report vulnerabilities privately; do not open a public bug report.

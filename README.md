@@ -112,3 +112,5 @@ Run `python scripts/check.py` for local formatting, analysis, contract and unit 
 Automatic patch versioning and annotated tags are implemented after the selected trunk quality gate. See [VERSIONING.md](VERSIONING.md) for policy, maintainer commands, GitHub App setup and recovery. The App credentials and repository rules must be configured before hosted automation can publish.
 
 See [PURPOSE.md](PURPOSE.md) for scope, [documentation navigation](docs/index.md) for guides and [TODO.md](TODO.md) for open work.
+
+Development uses `main` and `dev/<topic>` PR branches; see [BRANCHING.md](BRANCHING.md).

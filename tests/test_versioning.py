@@ -53,7 +53,8 @@ class VersioningTests(unittest.TestCase):
         for guard in (
             "github.event_name == 'push'",
             "github.workflow == 'CI'",
-            "github.event.repository.default_branch",
+            "vars.REPOSITORY_TRUNK",
+            "vars.REPOSITORY_VERSIONING_ENABLED == 'true'",
             "needs.quality-gate.result == 'success'",
             "needs.quality-gate.outputs.go == 'true'",
         ):

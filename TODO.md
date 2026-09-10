@@ -25,8 +25,8 @@ This is the tooling distribution's actionable backlog. Consumer feature work sti
 
 ## Hosted quality and distribution qualification
 
-- Configure the existing GitHub App variables/secret and trunk/tag rules described in VERSIONING.md; retain current credential names and review any ruleset migration explicitly.
-- Run hosted CI and tag-triggered release readiness; establish the required Quality gate rule and verify commit/run evidence and App publication on the selected trunk.
+- Configure the versioning App variables/secret and narrowly scoped App bypass described in VERSIONING.md; branch/tag rules are active. Enable REPOSITORY_VERSIONING_ENABLED only after App setup.
+- Run hosted CI and tag-triggered release readiness; prove the active Quality gate rule blocks failing PRs and verify commit/run evidence and App publication on the selected trunk.
 - Execute the declared macOS/Windows matrix and record results. Broaden native installation, real backend and live-agent evidence only through actual runs.
 - Verify the real private security-reporting feature/contact route before advertising it as enabled; maintain the existing SECURITY.md procedure without inventing contacts.
 

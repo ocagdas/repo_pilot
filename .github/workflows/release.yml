@@ -34,7 +34,7 @@ jobs:
             python scripts/version.py classify-release --tag "$REF_NAME" --github-output
             python scripts/build_release.py --tag "$REF_NAME"
           else
-            python scripts/build_release.py
+            python scripts/build_release.py --candidate
           fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

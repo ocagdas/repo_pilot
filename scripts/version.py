@@ -11,15 +11,17 @@ import subprocess
 import sys
 import tomllib
 
+try:
+    from scripts import repository_release as shared
+except ModuleNotFoundError:
+    import repository_release as shared
+
 ROOT = Path(__file__).resolve().parents[1]
 VERSION_FILES = ("pyproject.toml", "upstream.lock.json")
 PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)")
 
 
-def parse(value: str) -> tuple[int, int, int]:
-    if not isinstance(value, str) or not PATTERN.fullmatch(value):
-        raise ValueError("Version must be MAJOR.MINOR.PATCH without leading zeros")
-    return tuple(map(int, value.split(".")))
+parse = shared.parse
 
 
 def git(*args: str) -> str:
@@ -40,19 +42,8 @@ def current() -> str:
     return version
 
 
-def change_kind(previous: str, version: str) -> str:
-    before, after = parse(previous), parse(version)
-    if after <= before:
-        raise ValueError("Version must increase")
-    return next(name for name, old, new in zip(("major", "minor", "patch"), before, after) if old != new)
-
-
-def bump(version: str, kind: str) -> str:
-    parts = list(parse(version))
-    index = ("major", "minor", "patch").index(kind)
-    parts[index] += 1
-    parts[index + 1 :] = [0] * (2 - index)
-    return ".".join(map(str, parts))
+change_kind = shared.change_kind
+bump = shared.bump
 
 
 def write_version(version: str, *, dry_run: bool = False) -> dict:
@@ -112,18 +103,7 @@ def create_tag(*, dry_run: bool = False) -> str:
     return tag
 
 
-def plan(previous: str | None, version: str, *, merged: bool, tagged: bool = False) -> dict:
-    parse(version)
-    if tagged:
-        return {"mode": "none", "version": version, "reason": "already tagged"}
-    if previous is not None and previous != version:
-        kind = change_kind(previous, version)
-        if merged:
-            raise ValueError("PR merge changed the version")
-        return {"mode": "tag", "version": version, "kind": kind}
-    if merged:
-        return {"mode": "patch", "version": bump(version, "patch"), "kind": "patch"}
-    return {"mode": "none", "version": version, "reason": "no merged PR or version change"}
+plan = shared.plan
 
 
 def ci_plan(merged: bool) -> dict:

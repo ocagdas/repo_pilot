@@ -5,14 +5,14 @@ body:
     id: environment
     attributes:
       label: Versions and environment
-      description: Repo Pilot version/commit, Python version, OS, installation mode and backend.
+      description: Project version/commit, Python version, OS, installation mode and relevant integrations.
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
       label: Steps to reproduce
-      description: Use a disposable repository and dummy credentials. Do not include private source or graph bundles.
+      description: Use a disposable example and dummy credentials. Follow SECURITY.md for vulnerabilities; exclude private code, media and personal data.
     validations:
       required: true
   - type: textarea

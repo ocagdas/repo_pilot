@@ -35,7 +35,7 @@ class PublishVersionTests(unittest.TestCase):
         self.env.pop("GITHUB_OUTPUT", None)
         (self.repo / ".gitignore").write_text("__pycache__/\n", encoding="utf-8")
         (self.repo / "scripts").mkdir()
-        for name in ("version.py", "publish_version.py"):
+        for name in ("version.py", "publish_version.py", "repository_release.py"):
             shutil.copyfile(ROOT / "scripts" / name, self.repo / "scripts" / name)
         (self.repo / "pyproject.toml").write_text('[project]\nname = "fixture"\nversion = "1.1.0"\n', encoding="utf-8")
         shutil.copyfile(ROOT / "upstream.lock.json", self.repo / "upstream.lock.json")

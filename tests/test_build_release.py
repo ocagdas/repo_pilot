@@ -19,9 +19,11 @@ class BuildReleaseTests(unittest.TestCase):
             source = output / "fixture.tar.gz"
             wheel.write_bytes(b"wheel")
             source.write_bytes(b"source")
+            build_release.write_provenance(output, version="1.1.0", commit="a" * 40)
             (output / "SHA256SUMS").write_text(
                 "".join(
-                    hashlib.sha256(path.read_bytes()).hexdigest() + "  " + path.name + "\n" for path in (wheel, source)
+                    hashlib.sha256(path.read_bytes()).hexdigest() + "  " + path.name + "\n"
+                    for path in (wheel, source, output / "provenance.json")
                 ),
                 encoding="utf-8",
             )
@@ -40,8 +42,10 @@ class BuildReleaseTests(unittest.TestCase):
             wheel.write_bytes(b"wheel")
             source.write_bytes(b"source")
             manifest = folder / "SHA256SUMS"
+            build_release.write_provenance(folder, version="1.1.0", commit="a" * 40)
             original = "".join(
-                hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n" for p in (wheel, source)
+                hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n"
+                for p in (wheel, source, folder / "provenance.json")
             )
             manifest.write_text(original, encoding="utf-8")
             build_release.verify_manifest(folder)
@@ -64,3 +68,20 @@ class BuildReleaseTests(unittest.TestCase):
             extra.mkdir()
             with self.assertRaisesRegex(ValueError, "regular files"):
                 build_release.verify_manifest(folder)
+
+    def test_provenance_rejects_false_release_and_mismatched_digests(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "fixture.whl").write_bytes(b"wheel")
+            value = build_release.write_provenance(folder, version="1.1.0", commit="a" * 40)
+            build_release.verify_provenance(value, value["artifacts"])
+            for updates in (
+                {"tag": "v1.1.0"},
+                {"source_commit": "bad"},
+                {"schema_version": True},
+                {"build_kind": "release", "tag": "v1.1.0", "version_commit": "a" * 40, "dirty": True},
+            ):
+                with self.assertRaises(ValueError):
+                    build_release.verify_provenance(value | updates, value["artifacts"])
+            with self.assertRaises(ValueError):
+                build_release.verify_provenance(value, {"other.whl": "0" * 64})

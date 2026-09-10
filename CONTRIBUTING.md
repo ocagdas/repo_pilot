@@ -68,3 +68,6 @@ Use the current interpreter for child Python commands and UTF-8 for text files. 
 By submitting a contribution, you confirm that you have the right to contribute it under this repository's MIT license. Preserve applicable third-party notices. No separate CLA is currently required. Do not include proprietary code, private graph data or credentials in fixtures. Report vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
 
 Describe user-visible changes in the PR and update the owning STATUS/VALIDATION documents. There is no parallel manual changelog; future release notes should derive from tested release evidence. The default review owner is listed in `.github/CODEOWNERS`; GitHub only enforces owner review when an administrator enables that branch rule. Version changes are intentional release work, not automatic side effects of a contribution.
+
+Follow [BRANCHING.md](BRANCHING.md) for the shared trunk/dev branch convention,
+version/tag rules and REPOSITORY_VERSIONING_ENABLED activation setting.

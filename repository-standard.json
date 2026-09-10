@@ -1,0 +1,14 @@
+{
+  "contract_version": "1.0.0",
+  "project": "repo_pilot",
+  "required_jobs": [
+    "quality",
+    "unit",
+    "integration",
+    "artifacts"
+  ],
+  "version_mirror": "upstream.lock.json",
+  "trunk_variable": "REPOSITORY_TRUNK",
+  "publication": "disabled",
+  "license_profile": "MIT"
+}

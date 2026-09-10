@@ -22,6 +22,7 @@ def main(argv=None):
         ("format", [sys.executable, "-m", "ruff", "format", "--check", "."]),
         ("lint", [sys.executable, "-m", "ruff", "check", "."]),
         ("contracts", [sys.executable, "scripts/validate_project.py"]),
+        ("repository-standard", [sys.executable, "scripts/check_repository_standard.py"]),
         (
             "tests",
             [
