@@ -108,3 +108,5 @@ Optional CodeGraphContext and Sourcegraph retrieval now has a default-off select
 Repo Pilot is MIT-licensed; see [LICENSE](LICENSE) and [third-party notices](NOTICE.md). Contributions and bug reports are welcome: start with [CONTRIBUTING.md](CONTRIBUTING.md), [SUPPORT.md](SUPPORT.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [SECURITY.md](SECURITY.md).
 
 Run `python scripts/check.py` for local formatting, analysis, contract and unit checks. [CI.md](CI.md) documents strict integration checks, machine-readable go/no-go results, branch-protection setup and validated release artifacts. Hosted workflows are supplied; remote success is recorded only after a real run.
+
+Automatic patch versioning and annotated tags are implemented after the main quality gate. See [VERSIONING.md](VERSIONING.md) for policy, maintainer commands, GitHub App setup and recovery. The App credentials and repository rules must be configured before hosted automation can publish.

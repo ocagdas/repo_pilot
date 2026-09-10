@@ -22,7 +22,7 @@ Without SPECIFY_BIN the installation tests skip deliberately; report that omissi
 
 The preset composes with upstream templates and commands. The extension supplies additional procedures. Companion project files supply policy, configuration and local utilities. Avoid maintaining a second specification or task ledger alongside Spec Kit.
 
-Before a release, update STATUS.md, VALIDATION.md and the package version in upstream.lock.json. A change to the official CLI pin must also update requirements.txt and manifest compatibility constraints. No upstream fork is maintained.
+Before a release, update STATUS.md and VALIDATION.md. Follow [VERSIONING.md](VERSIONING.md): ordinary PRs leave the package version unchanged; CI synchronizes pyproject.toml and upstream.lock.json after eligible merges. Maintainers use scripts/version.py for explicit version increases. A change to the official CLI pin must also update requirements.txt and manifest compatibility constraints. No upstream fork is maintained.
 
 ## Version override regression tests
 

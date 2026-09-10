@@ -57,3 +57,5 @@ The **Release readiness** workflow runs on version tags or manual dispatch, reus
 Enable GitHub private vulnerability reporting so the route in SECURITY.md works. Confirm a private maintainer contact for conduct reports, and configure notification/review ownership. Dependabot proposes weekly action and Python updates; each update must pass the same gate. Optional backend pins must stay consistent with `requirements-knowledge.txt`; default Spec Kit pins must stay consistent with `requirements.txt` and manifest compatibility constraints.
 
 See VALIDATION.md for what actually ran. A workflow committed locally is readiness evidence, not a successful remote CI run or verified Windows/macOS support.
+
+Automatic patch versioning and annotated tags are implemented after the main quality gate. See [VERSIONING.md](VERSIONING.md) for policy, maintainer commands, GitHub App setup and recovery. The App credentials and repository rules must be configured before hosted automation can publish.

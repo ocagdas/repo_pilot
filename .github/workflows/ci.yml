@@ -14,7 +14,7 @@ permissions:
   contents: read
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 env:
   PYTHONUTF8: '1'
   PYTHONIOENCODING: utf-8
@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: '3.13'
@@ -34,6 +35,12 @@ jobs:
       - run: python -m ruff format --check .
       - run: python -m ruff check .
       - run: python scripts/validate_project.py
+      - run: python scripts/version.py check
+      - name: Reject version changes in pull requests
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python scripts/version.py check-pr --base-ref "$BASE_SHA"
       - name: Validate workflow expressions and job wiring
         shell: bash
         run: |
@@ -132,3 +139,70 @@ jobs:
           name: quality-gate
           path: .quality/ci-gate.json
           if-no-files-found: error
+
+  version:
+    name: Version and tag main
+    needs: [quality-gate]
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      github.workflow == 'CI' && needs.quality-gate.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    concurrency:
+      group: repo-pilot-main-version-mutation
+      cancel-in-progress: false
+    env:
+      REPO_PILOT_VERSIONING_ACTOR: ${{ vars.REPO_PILOT_VERSIONING_ACTOR || 'repo-pilot-versioning[bot]' }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13'
+      - name: Detect merged pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          associated=$(gh api --paginate "/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main")] | length > 0')
+          if echo "$associated" | grep -qx true; then
+            echo 'REPO_PILOT_ASSOCIATED_PR=true' >> "$GITHUB_ENV"
+          else
+            echo 'REPO_PILOT_ASSOCIATED_PR=false' >> "$GITHUB_ENV"
+          fi
+      - name: Classify tested commit
+        id: classify
+        run: python scripts/version.py classify-ci --github-output
+      - name: Require versioning app configuration
+        if: steps.classify.outputs.mode == 'ci_patch_after_merge' || steps.classify.outputs.mode == 'maintainer_direct_main_version_commit'
+        env:
+          APP_ID: ${{ vars.REPO_PILOT_VERSIONING_APP_ID }}
+          HAS_KEY: ${{ secrets.REPO_PILOT_VERSIONING_APP_PRIVATE_KEY != '' }}
+        run: |
+          test -n "$APP_ID" || { echo '::error::Missing REPO_PILOT_VERSIONING_APP_ID repository variable'; exit 1; }
+          test "$HAS_KEY" = true || { echo '::error::Missing REPO_PILOT_VERSIONING_APP_PRIVATE_KEY repository secret'; exit 1; }
+      - name: Create versioning app token
+        if: steps.classify.outputs.mode == 'ci_patch_after_merge' || steps.classify.outputs.mode == 'maintainer_direct_main_version_commit'
+        id: token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        with:
+          app-id: ${{ vars.REPO_PILOT_VERSIONING_APP_ID }}
+          private-key: ${{ secrets.REPO_PILOT_VERSIONING_APP_PRIVATE_KEY }}
+          permission-contents: write
+      - name: Check out tested commit with publication credentials
+        if: steps.token.outputs.token != ''
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          token: ${{ steps.token.outputs.token }}
+      - name: Publish version and tag atomically
+        if: steps.token.outputs.token != ''
+        run: |
+          git config user.name "$REPO_PILOT_VERSIONING_ACTOR"
+          git config user.email "${REPO_PILOT_VERSIONING_ACTOR}@users.noreply.github.com"
+          python scripts/publish_version.py --source "$GITHUB_SHA"

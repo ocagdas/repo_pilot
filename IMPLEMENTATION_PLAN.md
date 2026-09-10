@@ -19,7 +19,7 @@ Static/editable packaging, the repo-pilot launcher and optional dependency profi
 
 Next: select the pilot repository, record its languages/build variants/trunks and run repeatable source-only versus assisted tasks with actual agent clients. Use those results to finish work package 3 and prioritise work package 4 before semantic branch composition.
 
-Repository CI delivered: .github/workflows/ci.yml and release.yml run quality gates, pinned default/alternate integration tests and distribution validation. CI.md documents local equivalents, JSON go/no-go evidence and administrator setup. Remote runs and required branch checks are not yet established. This maintenance workflow is separate from work package 7's knowledge-artifact publication.
+Repository CI delivered: .github/workflows/ci.yml and release.yml run quality gates, pinned default/alternate integration tests and distribution validation. CI.md documents local equivalents, JSON go/no-go evidence and administrator setup. VERSIONING.md covers delivered automatic main patch versions, explicit maintainer increases, atomic tags and GitHub App setup. Remote runs and required branch checks are not yet established. This maintenance workflow is separate from work package 7's knowledge-artifact publication.
 
 ## Delivery approach
 
