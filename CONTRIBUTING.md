@@ -49,7 +49,7 @@ Set `REPO_PILOT_PACKAGE_TESTS=1` to include actual static/editable pip installat
 
 Repository regression CI and release-readiness workflows are included; see CI.md for local commands, strict integration prerequisites and branch-protection setup. Knowledge-artifact publication remains separate future work. A pushed commit is not evidence that remote tests ran.
 
-Before recording a baseline, reconcile ROADMAP.md and IMPLEMENTATION_PLAN.md with the code, label partial deliveries, and distinguish historical validation from the current run. Include the optional packaging and alternate-version checks when validating those parts of a pending change, and report every skip. Keep claims about generated integration files separate from live agent results.
+Before recording a baseline, reconcile ROADMAP.md and TODO.md with the code, label partial deliveries, and distinguish historical validation from the current run. Include the optional packaging and alternate-version checks when validating those parts of a pending change, and report every skip. Keep claims about generated integration files separate from live agent results.
 
 ## Contributor quickstart and quality gate
 
@@ -67,4 +67,4 @@ Use the current interpreter for child Python commands and UTF-8 for text files. 
 
 By submitting a contribution, you confirm that you have the right to contribute it under this repository's MIT license. Preserve applicable third-party notices. No separate CLA is currently required. Do not include proprietary code, private graph data or credentials in fixtures. Report vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
 
-Record user-visible changes under Unreleased in [CHANGELOG.md](CHANGELOG.md). The default review owner is listed in `.github/CODEOWNERS`; GitHub only enforces owner review when an administrator enables that branch rule. Version changes are intentional release work, not automatic side effects of a contribution.
+Describe user-visible changes in the PR and update the owning STATUS/VALIDATION documents. There is no parallel manual changelog; future release notes should derive from tested release evidence. The default review owner is listed in `.github/CODEOWNERS`; GitHub only enforces owner review when an administrator enables that branch rule. Version changes are intentional release work, not automatic side effects of a contribution.

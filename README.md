@@ -1,6 +1,6 @@
 # Spec Kit engineering package
 
-Choose a **static** snapshot or **editable** source-linked installation, with `minimal`, `cgc`, `sourcegraph` or `all` dependencies. See [installation modes](INSTALL_MODES.md). Setup now installs the `repo-pilot` command as well as Spec Kit.
+Choose a **static** snapshot or **editable** source-linked installation, with `minimal`, `cgc`, `sourcegraph` or `all` dependencies. See [installation modes](docs/user/installation-modes.md). Setup now installs the `repo-pilot` command as well as Spec Kit.
 
 This package adapts the official [GitHub Spec Kit](https://github.com/github/spec-kit) for embedded C and C++, Python and data science. It uses upstream v1.0.4 with a composable preset, an extension and project configuration. The official upstream remains unmodified. This custom package is not an official GitHub product.
 
@@ -8,7 +8,7 @@ This package adapts the official [GitHub Spec Kit](https://github.com/github/spe
 
 Follow [QUICKSTART.md](QUICKSTART.md) for a guided installation, project configuration and first feature workflow.
 
-Read STATUS.md for what is ready and what remains unimplemented. Read ROADMAP.md for delivered personal overrides and the remaining portable knowledge, trunk snapshot and team sharing milestones, and IMPLEMENTATION_PLAN.md for delivery work packages. Read INSTALLATION.md for native Python, venv, Conda and Docker instructions on Windows, Linux and macOS. Read REPOSITORY.md to push this distribution to your own Git repository.
+Read STATUS.md for what is ready and what remains unimplemented. Read ROADMAP.md for delivered personal overrides and the remaining portable knowledge, trunk snapshot and team sharing milestones, and TODO.md for open actions. Read INSTALLATION.md for native Python, venv, Conda and Docker instructions on Windows, Linux and macOS. Read docs/development/publishing-repository.md to push this distribution to your own Git repository.
 
 For Linux or macOS, the shortest venv setup is:
 
@@ -26,7 +26,7 @@ py -3 install.py C:\work\project --integration copilot --apply
 
 Run from this tooling repository. Choose a Python 3.11 or newer installation and have Git on PATH. install.py discovers the local .venv CLI automatically. Omit --apply from either command to preview its work. Repeat --integration to select codex, cursor-agent and copilot together.
 
-Setup installs machine tooling. install.py configures the target repository. Once target configuration is committed, another clone reuses it; it needs tooling but not regenerated documents. All methods default to the same official source pin. Local version selection, records and upgrade previews are described in [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md).
+Setup installs machine tooling. install.py configures the target repository. Once target configuration is committed, another clone reuses it; it needs tooling but not regenerated documents. All methods default to the same official source pin. Local version selection, records and upgrade previews are described in [docs/user/toolchain-versions.md](docs/user/toolchain-versions.md).
 
 ## Configure the project
 
@@ -87,7 +87,7 @@ For an unchanged version 6 template installation:
 python3 install.py /absolute/path/to/repo --integration copilot --migrate-v6 --apply
 ```
 
-Recognised legacy files are matched by content hash and moved to .ai_migration_backup before installing the new structure. Modified legacy files cause a stop before any target writes. Read MIGRATION.md to map customised policies and tasks deliberately. No active task information is silently converted or discarded.
+Recognised legacy files are matched by content hash and moved to .ai_migration_backup before installing the new structure. Modified legacy files cause a stop before any target writes. Read docs/user/migration.md to map customised policies and tasks deliberately. No active task information is silently converted or discarded.
 
 ## Package contents
 
@@ -109,4 +109,6 @@ Repo Pilot is MIT-licensed; see [LICENSE](LICENSE) and [third-party notices](NOT
 
 Run `python scripts/check.py` for local formatting, analysis, contract and unit checks. [CI.md](CI.md) documents strict integration checks, machine-readable go/no-go results, branch-protection setup and validated release artifacts. Hosted workflows are supplied; remote success is recorded only after a real run.
 
-Automatic patch versioning and annotated tags are implemented after the main quality gate. See [VERSIONING.md](VERSIONING.md) for policy, maintainer commands, GitHub App setup and recovery. The App credentials and repository rules must be configured before hosted automation can publish.
+Automatic patch versioning and annotated tags are implemented after the selected trunk quality gate. See [VERSIONING.md](VERSIONING.md) for policy, maintainer commands, GitHub App setup and recovery. The App credentials and repository rules must be configured before hosted automation can publish.
+
+See [PURPOSE.md](PURPOSE.md) for scope, [documentation navigation](docs/index.md) for guides and [TODO.md](TODO.md) for open work.

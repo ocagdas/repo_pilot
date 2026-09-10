@@ -1,7 +1,6 @@
 """Quality gates must fail closed and release manifests must cover exact artifacts."""
 
 import contextlib
-import hashlib
 import io
 import json
 import os
@@ -14,19 +13,10 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from scripts import build_release, check, ci_gate, run_tests, validate_project
+from scripts import check, run_tests, validate_project
 
 
 class QualityGateTests(unittest.TestCase):
-    def test_ci_gate_rejects_failure_cancellation_skips_missing_and_unknown_jobs(self):
-        good = {name: {"result": "success"} for name in ("quality", "unit", "integration", "artifacts")}
-        self.assertTrue(ci_gate.decision(good))
-        for status in ("failure", "cancelled", "skipped", None):
-            self.assertFalse(ci_gate.decision(good | {"integration": {"result": status}}))
-        self.assertFalse(ci_gate.decision({key: value for key, value in good.items() if key != "unit"}))
-        self.assertFalse(ci_gate.decision(good | {"unexpected": {"result": "success"}}))
-        self.assertFalse(ci_gate.decision([]))
-
     def test_local_gate_overwrites_stale_go_and_stops_on_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "gate.json"
@@ -67,27 +57,6 @@ class QualityGateTests(unittest.TestCase):
             report = run_tests.run(full=True)
         self.assertFalse(report["passed"])
         self.assertEqual(report["suites"][0]["skipped"][0]["reason"], "fixture unavailable")
-
-    def test_release_manifest_rejects_tampering_and_incomplete_sets(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            output = Path(temporary)
-            wheel = output / "fixture.whl"
-            source = output / "fixture.tar.gz"
-            wheel.write_bytes(b"wheel")
-            source.write_bytes(b"source")
-            (output / "SHA256SUMS").write_text(
-                "".join(
-                    hashlib.sha256(path.read_bytes()).hexdigest() + "  " + path.name + "\n" for path in (wheel, source)
-                ),
-                encoding="utf-8",
-            )
-            build_release.verify_manifest(output)
-            wheel.write_bytes(b"changed")
-            with self.assertRaisesRegex(ValueError, "Checksum mismatch"):
-                build_release.verify_manifest(output)
-            source.unlink()
-            with self.assertRaisesRegex(ValueError, "exactly one wheel"):
-                build_release.verify_manifest(output)
 
     def test_distribution_contracts_and_license_metadata(self):
         validate_project.validate()

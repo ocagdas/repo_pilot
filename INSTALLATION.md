@@ -4,7 +4,7 @@ For a guided first setup followed by configuration and usage, start with [QUICKS
 
 Use this repository as the tooling distribution. Keep it outside the software repository you want to configure. Machine setup installs the repo-pilot launcher and official Spec Kit; install.py then installs the project files. The same tooling environment can serve multiple project clones.
 
-The default is a Python virtual environment. Native Python, Conda and Docker are alternatives. Minimal setup does not install graph dependencies. Add `--extras cgc`, `sourcegraph` or `all` for optional clients; use `--static` (default) or `--editable` to select source update behavior. See [INSTALL_MODES.md](INSTALL_MODES.md). Coding assistants, compilers, board SDKs and model subscriptions remain separate.
+The default is a Python virtual environment. Native Python, Conda and Docker are alternatives. Minimal setup does not install graph dependencies. Add `--extras cgc`, `sourcegraph` or `all` for optional clients; use `--static` (default) or `--editable` to select source update behavior. See [docs/user/installation-modes.md](docs/user/installation-modes.md). Coding assistants, compilers, board SDKs and model subscriptions remain separate.
 
 ## Prerequisites and validation scope
 
@@ -166,7 +166,7 @@ The image downloads dependencies while building. Runtime project staging uses th
 
 ## Choose a Spec Kit version
 
-The default stays pinned to 1.0.4. Use `speckit.ref` in project/personal settings or `--speckit-ref` to select another official release or full commit. See [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md) for environment isolation, Conda names, Docker build arguments, record export/import and upgrade previews.
+The default stays pinned to 1.0.4. Use `speckit.ref` in project/personal settings or `--speckit-ref` to select another official release or full commit. See [docs/user/toolchain-versions.md](docs/user/toolchain-versions.md) for environment isolation, Conda names, Docker build arguments, record export/import and upgrade previews.
 
 ## Choose agents
 
@@ -189,7 +189,7 @@ specify preset add --dev /path/to/this/tooling/preset
 
 Use Specify CLI 1.0.4. Compare and merge the relevant files from project/ into your project, especially AI_CONTEXT.md, domain configuration, utilities and the constitution. Preserve authored values. The extension and preset alone expect those companion files and are not a complete standalone installation. Installing them does not overwrite the live constitution with our seed.
 
-For the recognised unchanged v6 baseline, use the --migrate-v6 option described in MIGRATION.md. For a new clone whose configuration is already committed, install machine tooling only; do not regenerate its repository files.
+For the recognised unchanged v6 baseline, use the --migrate-v6 option described in docs/user/migration.md. For a new clone whose configuration is already committed, install machine tooling only; do not regenerate its repository files.
 
 ## Official references
 

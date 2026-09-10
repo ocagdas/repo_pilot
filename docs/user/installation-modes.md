@@ -23,7 +23,7 @@ Choose one, not both. Omit `--apply` to preview the exact commands without insta
 | `cgc` | Minimums plus CodeGraphContext, Kuzu and MCP |
 | `all` | Minimums plus all currently supported optional clients |
 
-Optional packages remain subject to their own platform/Python support. Installing them does **not** enable a backend, start a server or parse a repository. `knowledge.backend` remains off until selected through project/user settings or a query's `--backend` argument. Sourcegraph still needs a separately managed deployment; no Sourcegraph server is installed. See [backend configuration](project/ai_workflow/knowledge_backends.md).
+Optional packages remain subject to their own platform/Python support. Installing them does **not** enable a backend, start a server or parse a repository. `knowledge.backend` remains off until selected through project/user settings or a query's `--backend` argument. Sourcegraph still needs a separately managed deployment; no Sourcegraph server is installed. See [backend configuration](../../project/ai_workflow/knowledge_backends.md).
 
 ## Run the installed command
 
@@ -99,4 +99,4 @@ docker run --rm --entrypoint repo-pilot \
   repo-pilot:editable install /workspace --specify specify --apply
 ```
 
-This editable example uses the default pinned Spec Kit in the image. It bypasses the legacy Docker wrapper's image-local source record, which a checkout mount would hide. Rebuild for dependency changes. For alternate Spec Kit image versions, use the existing static image flow in [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md). Mount caches separately if backend data must persist, and follow your normal container UID/GID configuration to preserve host ownership.
+This editable example uses the default pinned Spec Kit in the image. It bypasses the legacy Docker wrapper's image-local source record, which a checkout mount would hide. Rebuild for dependency changes. For alternate Spec Kit image versions, use the existing static image flow in [docs/user/toolchain-versions.md](toolchain-versions.md). Mount caches separately if backend data must persist, and follow your normal container UID/GID configuration to preserve host ownership.

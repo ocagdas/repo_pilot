@@ -4,10 +4,12 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tarfile
 import tomllib
 import zipfile
 
@@ -15,11 +17,22 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def verify_manifest(directory):
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError("Artifact directory must be a real directory")
+    paths = list(directory.iterdir())
+    if any(p.is_symlink() or not p.is_file() for p in paths):
+        raise ValueError("Artifact entries must be regular files")
     manifest = directory / "SHA256SUMS"
     entries = {}
     for line in manifest.read_text(encoding="utf-8").splitlines():
         digest, name = line.split("  ", 1)
-        if Path(name).name != name or name in entries:
+        if (
+            Path(name).name != name
+            or name in entries
+            or "\\" in name
+            or ":" in name
+            or not re.fullmatch(r"[0-9a-f]{64}", digest)
+        ):
             raise ValueError("Invalid checksum manifest entry")
         entries[name] = digest
     artifacts = {p.name for p in directory.glob("*.whl")} | {p.name for p in directory.glob("*.tar.gz")}
@@ -27,6 +40,8 @@ def verify_manifest(directory):
         raise ValueError("Expected exactly one wheel and one source distribution in manifest")
     if len(list(directory.glob("*.whl"))) != 1 or len(list(directory.glob("*.tar.gz"))) != 1:
         raise ValueError("Release artifact types are incomplete")
+    if {p.name for p in paths} != artifacts | {"SHA256SUMS"}:
+        raise ValueError("Unexpected files in release artifact set")
     for name, expected in entries.items():
         if hashlib.sha256((directory / name).read_bytes()).hexdigest() != expected:
             raise ValueError(f"Checksum mismatch: {name}")
@@ -65,6 +80,21 @@ def main(argv=None):
             raise ValueError("Wheel is missing licensing notices")
         if not any(name.endswith("/tools/knowledge_state.py") for name in names):
             raise ValueError("Wheel is missing required consumer payload")
+    with tarfile.open(sources[0], "r:gz") as archive:
+        names = {"/".join(name.split("/")[1:]) for name in archive.getnames()}
+        required = {
+            "docs/index.md",
+            "docs/architecture.md",
+            "docs/user/installation-modes.md",
+            "docs/development/knowledge-design.md",
+            "REPOSITORY_STRUCTURE.md",
+            "TODO.md",
+            "scripts/version.py",
+            "scripts/publish_version.py",
+            ".github/workflows/version.yml",
+        }
+        if not required <= names:
+            raise ValueError("Source distribution is missing maintenance guides or helpers")
     with tempfile.TemporaryDirectory(prefix="repo-pilot-release-") as temporary:
         environment = Path(temporary) / "environment"
         subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True, timeout=120)

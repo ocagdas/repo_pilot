@@ -1,0 +1,62 @@
+# Package versions and tags
+
+Repo Pilot follows the common [repository contract](REPOSITORY_STRUCTURE.md), with `pyproject.toml [project].version` mirrored in `upstream.lock.json package_version`. Package bumps leave the official Spec Kit pin, requirements.txt, preset and extension versions unchanged. Consumer toolchain overrides are independent.
+
+## Commands and outputs
+
+```bash
+python scripts/version.py check
+python scripts/version.py current --plain
+python scripts/version.py current --json
+python scripts/version.py minor --dry-run
+python scripts/version.py minor
+# Also: patch, major, set 2.1.0
+python scripts/version.py tag --dry-run
+python scripts/version.py check-pr --base-ref origin/main
+python scripts/version.py classify-ci --merged --github-output
+python scripts/version.py classify-release --tag v1.2.0 --github-output
+```
+
+Numeric MAJOR.MINOR.PATCH is required; leading zeros, prereleases, inconsistent mirrors and equal/decreasing requested values are rejected. `current` defaults to JSON. Classifiers do not mutate Git. `classify-ci` returns integer `schema_version: 1`, `mode: patch|tag|none`, target `version`, `tag` and `source_commit`. Supply `--merged` only after verifying merged-PR association; merge commits are also recognized from history. Classifiers describe a commit; the workflow restricts which branch may publish it.
+
+`--github-output` explicitly writes step outputs. `classify-release` requires tag, HEAD and package version to agree and always returns `publish: false`. Public GitHub Release/PyPI publication remains disabled.
+
+Local bump commands edit the two mirrors but do not commit/push. Use a clean, current selected-trunk checkout for a maintainer version increase; review, commit and push through authorized maintainer procedures. `tag` requires a clean tree, creates an annotated tag, and never moves an existing tag. The same-commit tag is an idempotent no-op. Local tagging does not run CI.
+
+## Trunk and automatic policy
+
+The selected release trunk defaults to the repository's GitHub default branch. Set repository variable `REPO_PILOT_VERSIONING_TRUNK` to override it, for example `release/next`. Checks still cover all branches. Update the trunk's protection rules when changing the selection; configuration alone does not grant a bypass.
+
+Ordinary PRs must leave package version values unchanged. The PR check compares against the merge base so a later trunk version bump does not invalidate an unchanged stale feature branch. After a qualifying trunk merge passes Quality gate, CI increments the patch and tags it. Maintainer-selected higher versions on a direct trunk push are tagged without a second bump. Direct code-only pushes run checks without a bump.
+
+`ci.yml` calls the reusable `version.yml` only after job success and `go == 'true'`, for a top-level CI push to the selected trunk at the same tested SHA. PR, manual, merge-queue and reusable release-check runs cannot mutate versions. PR detection is paginated and filters merged PRs to the selected trunk, supporting squash/rebase merges. Mutation is serialized per trunk.
+
+The publisher requires a clean disposable checkout, matching HEAD/GITHUB_SHA and the exact remote trunk tip. It does not rebase onto newer untested code. An advanced tip returns `superseded`; rapid merges may coalesce into one patch. A later direct code-only push does not cause an automatic catch-up bump. Merge another PR or select a version explicitly if one is needed.
+
+A version commit and tag are pushed together using `git push --atomic`, without force. A matching tag prevents repeat versioning, including the App-triggered CI run. Credentials/actor names and commit message text do not serve as a substitute for the quality gate or immutable tag identity.
+
+## GitHub activation
+
+1. Install a repository-scoped GitHub App with Contents read/write permission.
+2. Keep existing variable `REPO_PILOT_VERSIONING_APP_ID` and secret `REPO_PILOT_VERSIONING_APP_PRIVATE_KEY` (PEM key). No credential names changed during standardization. The reusable workflow passes the same secret through its internal `versioning-private-key` argument.
+3. Set `REPO_PILOT_VERSIONING_ACTOR` to the App bot login for commit identity; its default remains `repo-pilot-versioning[bot]`. Loop prevention now relies on the exact existing tag, rather than the former `[skip ci-version]` message/actor guard. Existing tagged commits remain no-ops; no message migration is needed.
+4. Require the stable **Quality gate** check on contributor PRs. Allow only the dedicated App to make the necessary version commit/new tag under the selected trunk and `v*` rules. Keep force-push/tag-update/deletion restrictions. Explicit maintainer version commits require authorized repository rules.
+5. Run a real trunk PR merge and inspect the version workflow and tag-triggered Release readiness. Missing App settings fail visibly when an action is needed. Hosted activation tasks remain in [TODO.md](TODO.md).
+
+The App token allows pushed tags to trigger subsequent workflows; default GITHUB_TOKEN push events ordinarily do not. See [GitHub workflow triggers](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow). CI/release callers allow contents/read and pull-requests/read; write credentials are created only inside the already-gated version job.
+
+## Recovery and distribution boundary
+
+The CI helper interface is:
+
+```bash
+python scripts/publish_version.py --source SHA --trunk BRANCH --merged --github-output
+```
+
+It emits integer schema version 1, `status: published|unchanged|superseded`, and `source_commit`; published results include `version`, `tag` and `version_commit`. A fabricated local flag does not grant publication authority. Use this helper only in an authorized disposable checkout with configured credentials.
+
+Conflicting tags are errors, never overwritten. On branch-rule rejection, network failure or concurrent updates, resolve the underlying issue and rerun in a fresh checkout. Atomic publication avoids intentionally publishing half the operation; if the push succeeded but its response was lost, a fresh run sees the tag/advanced tip. Do not reuse the locally mutated failed checkout or delete tags as recovery.
+
+Tags trigger full release-readiness checks and validated wheel/source artifacts. Source CI success is not proof that a subsequent tag build or public publication succeeded. [CI.md](CI.md) owns quality evidence; [VALIDATION.md](VALIDATION.md) records executed scope.
+
+Helpers follow the sibling standard informed by aiplane and AI Content Factory (same MIT copyright 2026 ocagdas); copies are local adapters with no sibling runtime imports. This interface transition removes the previous classifier mode names and test_version.py; no deployed consumers of those new maintenance helpers are established. Consumer-installed command/payload interfaces are unchanged.

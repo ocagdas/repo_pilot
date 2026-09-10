@@ -1,8 +1,8 @@
 # Quickstart: install, configure, and use Spec Kit
 
-Choose a **static** snapshot or **editable** source-linked installation, with `minimal`, `cgc`, `sourcegraph` or `all` dependencies. See [installation modes](INSTALL_MODES.md). Setup now installs the `repo-pilot` command as well as Spec Kit.
+Choose a **static** snapshot or **editable** source-linked installation, with `minimal`, `cgc`, `sourcegraph` or `all` dependencies. See [installation modes](docs/user/installation-modes.md). Setup now installs the `repo-pilot` command as well as Spec Kit.
 
-This tutorial installs this repository's engineering package around official GitHub Spec Kit, configures a software project, and walks through a first feature. It describes the current package, which defaults to Specify CLI 1.0.4. Personal settings hierarchies are available; see [the settings guide](project/ai_workflow/settings.md). Local Spec Kit version overrides are available in [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md). Shared graph downloads and automatic trunk detection remain planned in [ROADMAP.md](ROADMAP.md).
+This tutorial installs this repository's engineering package around official GitHub Spec Kit, configures a software project, and walks through a first feature. It describes the current package, which defaults to Specify CLI 1.0.4. Personal settings hierarchies are available; see [the settings guide](project/ai_workflow/settings.md). Local Spec Kit version overrides are available in [docs/user/toolchain-versions.md](docs/user/toolchain-versions.md). Shared graph downloads and automatic trunk detection remain planned in [ROADMAP.md](ROADMAP.md).
 
 ## 1. Prepare two separate directories
 
@@ -218,7 +218,7 @@ python3 install.py /absolute/path/to/my_project --integration codex --integratio
 
 The first integration is restored as the default. Generated skills go under `.agents/skills` for Codex, `.cursor/skills` for Cursor, and `.github/skills` for Copilot. Copilot also receives `.github/copilot-instructions.md`.
 
-If installation reports collisions, it stops before target writes. Preserve your authored files and follow the existing-project instructions in [INSTALLATION.md](INSTALLATION.md). Do not delete customised instructions just to make installation pass. For an unchanged legacy v6 installation, use the specific process in [MIGRATION.md](MIGRATION.md).
+If installation reports collisions, it stops before target writes. Preserve your authored files and follow the existing-project instructions in [INSTALLATION.md](INSTALLATION.md). Do not delete customised instructions just to make installation pass. For an unchanged legacy v6 installation, use the specific process in [docs/user/migration.md](docs/user/migration.md).
 
 ## 4. Configure your software project
 
@@ -366,7 +366,7 @@ This validates report structure, coverage and evidence references; it does not e
 
 Commit and share the agreed project guidance and workflow files. In another clone, reuse those files; do not rerun the project installer merely to regenerate them. On another machine, obtain this tooling distribution and perform step 2 to create machine-local tooling, plus the project's usual development environment setup. Then open the configured clone and start at step 6.
 
-Current caches are local. Portable graph bundles and shared trunk publication are described in [ROADMAP.md](ROADMAP.md) and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For local Spec Kit version selection and conservative upgrades, see [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md).
+Current caches are local. Portable graph bundles and shared trunk publication are described in [ROADMAP.md](ROADMAP.md) and [knowledge design](docs/development/knowledge-design.md). For local Spec Kit version selection and conservative upgrades, see [docs/user/toolchain-versions.md](docs/user/toolchain-versions.md).
 
 ## Optional graph retrieval
 

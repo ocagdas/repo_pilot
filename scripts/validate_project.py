@@ -1,6 +1,8 @@
 """Validate distribution metadata, source pins, schemas and workflow YAML."""
 
 import json
+import re
+from urllib.parse import unquote
 from pathlib import Path
 import tomllib
 
@@ -39,10 +41,42 @@ def validate(root=ROOT):
         for pattern in ("**/*.yml", "**/*.yaml"):
             for path in (root / folder).glob(pattern):
                 list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
-    for name in ("LICENSE", "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md", "SUPPORT.md", "CI.md"):
+    for name in (
+        "LICENSE",
+        "NOTICE.md",
+        "README.md",
+        "PURPOSE.md",
+        "STATUS.md",
+        "VALIDATION.md",
+        "ROADMAP.md",
+        "TODO.md",
+        "CONTRIBUTING.md",
+        "CI.md",
+        "VERSIONING.md",
+        "REPOSITORY_STRUCTURE.md",
+        "AGENTS.md",
+        "HANDOFF.md",
+        "SECURITY.md",
+        "CODE_OF_CONDUCT.md",
+        "SUPPORT.md",
+        "docs/index.md",
+        "docs/architecture.md",
+    ):
         require((root / name).is_file(), f"Missing community documentation: {name}")
+
+
+def validate_document_links(root=ROOT):
+    """Check maintained repository guides; consumer prompt links have another root."""
+    for path in [*root.glob("*.md"), *(root / "docs").rglob("*.md")]:
+        text = re.sub(r"(?ms)^```.*?^```[^\n]*", "", path.read_text(encoding="utf-8"))
+        for target in re.findall(r"\]\(([^)]+)\)", text):
+            if "://" in target or target.startswith(("#", "mailto:", "/")):
+                continue
+            local = unquote(target.split("#", 1)[0])
+            require((path.parent / local).exists(), f"Broken local link in {path.relative_to(root)}: {target}")
 
 
 if __name__ == "__main__":
     validate()
+    validate_document_links()
     print("Distribution contracts passed.")

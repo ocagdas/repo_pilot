@@ -35,11 +35,21 @@ Full mode fails if prerequisites are absent or any test is skipped. It covers de
 - complete Linux integration tests with no skips;
 - wheel/sdist build, metadata validation, checksums and clean-environment wheel smoke tests.
 
-The final **Quality gate** job requires all four job groups to succeed. Failed, cancelled, skipped or missing prerequisites produce NO-GO. It publishes `go=true|false` as a job output, a reusable-workflow output and `.quality/ci-gate.json`. Evidence is uploaded as Actions artifacts. CI uses read-only repository permissions, immutable action commits and no repository secrets; it does not execute untrusted PR code with a privileged `pull_request_target` event.
+The final **Quality gate** job requires all four job groups to succeed. Failed, cancelled, skipped or missing prerequisites produce NO-GO; any additional non-success dependency also blocks. It publishes `go=true|false` as a job output, a reusable-workflow output and `.quality/ci-gate.json`. Evidence is uploaded as Actions artifacts. Quality jobs use read-only repository permissions and immutable action commits; the separately gated reusable version workflow receives the configured App secret only for eligible trunk pushes; it does not execute untrusted PR code with a privileged `pull_request_target` event.
 
 Repository administrators must enable Actions and configure the default branch/release trunks to require **Quality gate**, require up-to-date checks or a merge queue, prevent force pushes, and require review appropriate to the team. A workflow file alone cannot enforce branch protection. Add the check after its first real run so GitHub can discover its name. Do not exempt documentation-only changes: they can affect package metadata, workflows or installed guidance.
 
-A downstream deployment workflow can call `ci.yml`, depend on that job, and require `needs.checks.outputs.go == 'true'`. Also use a protected deployment environment for publication credentials and approvals. Never consume a previous run's green flag as evidence for a different commit.
+A downstream deployment workflow can call `ci.yml`, depend on that job, and require `needs.checks.result == 'success'` and `needs.checks.outputs.go == 'true'` for the same commit. Also use a protected deployment environment for publication credentials and approvals. Never consume a previous run's green flag as evidence for a different commit.
+
+The `quality-gate` artifact contains `ci-gate.json` with the shared schema:
+
+```json
+{"schema_version": 1, "go": true, "commit": "tested-sha", "run_id": "run-id", "checks": {"quality": "success", "unit": "success", "integration": "success", "artifacts": "success"}}
+```
+
+`python scripts/ci_gate.py --results jobs.json --report .quality/ci-gate.json` reads an explicit results file; otherwise it reads NEEDS_JSON. Invalid/missing input fails closed. Local runs without GitHub environment identity report null commit/run_id, so they cannot stand in for hosted evidence. The local stage/test reports remain separate from this shared hosted schema.
+
+`version.yml` is reusable only and is called by eligible top-level CI trunk pushes after Quality gate success. Release checks reuse `ci.yml` without invoking mutation. See VERSIONING.md for selected-trunk defaults, App settings and serialized atomic publication. No remote rules are changed by these workflow files.
 
 ## Release candidates
 

@@ -1,5 +1,26 @@
 # Validation record
 
+## Current snapshot: repository standardization, 10 September 2026
+
+Tested the working-tree standardization delta on base commit `89947a155de6c2f81f76bf51bbc397233e184871`; this is not a committed release revision. Read the sibling handoff and AI Content Factory's shared contract/reference helpers. The reference checkout was at `e5ab754f2e26470ca1ce68dd0eaa8c4c92efee01` with staged standardization changes, so that commit alone does not identify the borrowed working-tree implementation. Repo Pilot contains local adapters, not a dependency on sibling paths, and no sibling migration/hosted success is asserted.
+
+Executed on Linux with `/tmp/repo-pilot-graph-validation/bin/python`:
+
+- `scripts/check.py --full`, using `.quality/toolchains/environment.json`: **143 tests passed, no skips** (111 repository tests and 32 consumer bootstrap tests). `.quality/gate.json` reports full-profile GO. Log: `/tmp/repo-pilot-standard-full.log`.
+- Version/publication tests cover mirror synchronization, strict numeric versions, dry runs, PR merge-base handling, same-commit reruns, wrong source rejection, tag collisions, dirty trees, stale remote tips and atomic server rejection against disposable bare remotes. A non-main `release/next` trunk was actually published locally. Canonical JSON modes/statuses and explicit GitHub outputs are checked; classify-release returns publish=false.
+- Paginated PR fixtures cover later-page matches, other trunks/repositories, unmerged PRs and malformed responses. No live GitHub PR association call is claimed. Quality tests cover missing/failed/skipped/cancelled jobs, successful extra jobs and failing extra dependencies, plus integer schema version, boolean GO and commit/run identity.
+- `scripts/build_release.py --output /tmp/repo-pilot-standard-release --tag v1.1.0` built wheel/source artifacts, passed strict Twine metadata checks, verified required source guides/helpers, inspected wheel payload/licenses, installed and smoke-tested the wheel in a clean venv, and verified SHA256SUMS. Log: `/tmp/repo-pilot-standard-build.log`.
+- Manifest tests reject changed bytes, incomplete/duplicate sets, portable unsafe names, invalid hashes, unexpected files and non-file entries. Moved guides are included through MANIFEST.in. Maintained root/docs Markdown links and required documents pass `scripts/validate_project.py`.
+- Ruff formatting/analysis, pinned actionlint 1.7.7 and `git diff --check` passed. Version check remains 1.1.0; patch dry-run proposes 1.1.1 without modifying package metadata.
+
+Retained adapters: root runtime layout, installed project/ payload, wheel/source qualification, optional/toolchain integration tests, existing App variable/secret names and approved legal/security policies. Root quickstart/installation remain because package/setup references use them. Detailed guides moved under docs; TODO owns open actions, the former implementation backlog became focused knowledge design, and the unreleased manual changelog was consolidated into capability/evidence documentation.
+
+No hosted CI, App push, ruleset change, public release/PyPI upload, Windows/macOS execution or new live-agent/backend/token benchmark was performed. Pending hosted qualification and product work are tracked only in TODO.md. Versioning is behind the gated reusable version.yml; the selected trunk defaults to GitHub's repository default branch with REPO_PILOT_VERSIONING_TRUNK override.
+
+## Historical evidence
+
+The entries below retain their original run scope and may reference previous document/interface names. They are not the current validation snapshot.
+
 Date: 6 September 2026.
 
 Official upstream: github/spec-kit v1.0.4 at cb610277fdea781fcfa83d20522c2db37c94068d. The checkout remained unmodified. The official CLI was installed into an isolated local Python environment.

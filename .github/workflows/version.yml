@@ -1,0 +1,85 @@
+name: Version
+on:
+  workflow_call:
+    inputs:
+      source:
+        type: string
+        required: true
+      trunk:
+        type: string
+        required: true
+    secrets:
+      versioning-private-key:
+        required: false
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  publish:
+    name: Version and tag trunk
+    if: >-
+      github.event_name == 'push' && github.workflow == 'CI' &&
+      github.ref == format('refs/heads/{0}', inputs.trunk) && github.sha == inputs.source
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: repo-pilot-version-${{ inputs.trunk }}
+      cancel-in-progress: false
+    env:
+      SOURCE: ${{ inputs.source }}
+      TRUNK: ${{ inputs.trunk }}
+      REPO_PILOT_VERSIONING_ACTOR: ${{ vars.REPO_PILOT_VERSIONING_ACTOR || 'repo-pilot-versioning[bot]' }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ inputs.source }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13'
+      - name: Validate selected trunk
+        run: git check-ref-format "refs/heads/$TRUNK"
+      - name: Detect merged pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          merged=$(python scripts/merged_pr.py --source "$SOURCE" --trunk "$TRUNK")
+          echo "MERGED=$merged" >> "$GITHUB_ENV"
+      - name: Classify tested commit
+        id: classify
+        run: |
+          args=()
+          if [ "$MERGED" = true ]; then args+=(--merged); fi
+          python scripts/version.py classify-ci "${args[@]}" --github-output
+      - name: Require versioning app configuration
+        if: steps.classify.outputs.mode == 'patch' || steps.classify.outputs.mode == 'tag'
+        env:
+          APP_ID: ${{ vars.REPO_PILOT_VERSIONING_APP_ID }}
+          HAS_KEY: ${{ secrets.versioning-private-key != '' }}
+        run: |
+          test -n "$APP_ID" || { echo '::error::Missing REPO_PILOT_VERSIONING_APP_ID repository variable'; exit 1; }
+          test "$HAS_KEY" = true || { echo '::error::Missing REPO_PILOT_VERSIONING_APP_PRIVATE_KEY repository secret'; exit 1; }
+      - name: Create versioning app token
+        if: steps.classify.outputs.mode == 'patch' || steps.classify.outputs.mode == 'tag'
+        id: token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        with:
+          app-id: ${{ vars.REPO_PILOT_VERSIONING_APP_ID }}
+          private-key: ${{ secrets.versioning-private-key }}
+          permission-contents: write
+      - name: Check out tested commit with publication credentials
+        if: steps.token.outputs.token != ''
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ inputs.source }}
+          fetch-depth: 0
+          token: ${{ steps.token.outputs.token }}
+      - name: Publish version and tag atomically
+        if: steps.token.outputs.token != ''
+        run: |
+          git config user.name "$REPO_PILOT_VERSIONING_ACTOR"
+          git config user.email "${REPO_PILOT_VERSIONING_ACTOR}@users.noreply.github.com"
+          args=()
+          if [ "$MERGED" = true ]; then args+=(--merged); fi
+          python scripts/publish_version.py --source "$SOURCE" --trunk "$TRUNK" "${args[@]}" --github-output

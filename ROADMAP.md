@@ -2,7 +2,7 @@
 
 Status: reconciled with the working tree on 8 September 2026. Configuration, version overrides and packaging are implemented; local retrieval and manual full-snapshot sharing are partial deliveries of the knowledge roadmap. STATUS.md and VALIDATION.md remain the sources for current readiness and executed checks.
 
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for work packages, dependencies and acceptance checks.
+See [knowledge design](docs/development/knowledge-design.md) for artifact, configuration and branch-composition constraints; TODO.md owns open actions.
 
 ## Aim
 
@@ -14,7 +14,7 @@ Keep the knowledge engine usable independently of Spec Kit, with this package pr
 
 The package supplies project configuration, engineering guidance, agent entry points, an upstream Spec Kit pin, and installation helpers. Bootstrap creates local file inventories, branch deltas, and worktree overlays. It checks basic semantic manifests but does not execute an indexing backend, compose semantic graphs, or publish/fetch shared artifacts.
 
-The separate knowledge adapter provides default-off CGC retrieval and Sourcegraph revision-scoped keyword searches. CGC explicitly rebuilds a clean revision and exports/imports checked full snapshots. Bootstrap reports the selected backend without invoking it. Static/editable packaging and optional dependency profiles are also delivered; see INSTALL_MODES.md.
+The separate knowledge adapter provides default-off CGC retrieval and Sourcegraph revision-scoped keyword searches. CGC explicitly rebuilds a clean revision and exports/imports checked full snapshots. Bootstrap reports the selected backend without invoking it. Static/editable packaging and optional dependency profiles are also delivered; see docs/user/installation-modes.md.
 
 Current base selection picks the first configured reference that exists, then uses its merge-base with HEAD. It does not infer parent trunks. Large-repository performance and live agent token savings have not been established.
 
@@ -115,7 +115,7 @@ Exit: verify merge rules and two-clone personal project reuse with isolated chec
 
 ### Phase 2 — Reproducible Spec Kit overrides
 
-Initial implementation delivered; see [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md) for scope and validation limits.
+Initial implementation delivered; see [docs/user/toolchain-versions.md](docs/user/toolchain-versions.md) for scope and validation limits.
 
 Deliver version resolution, isolated environments, local toolchain records, staging compatibility checks, and upgrade previews while leaving the distribution pin unchanged.
 
@@ -139,7 +139,7 @@ Exit: demonstrate release/RC feature branches across two clones and two machines
 
 ### Phase 5 — CI publication and team consumption
 
-Status: Planned. Repository regression CI, release-readiness workflows and main package version/tag automation are implemented separately; see CI.md and IMPLEMENTATION_PLAN.md. Hosted execution/enforcement still needs confirmation.
+Status: Planned. Repository regression CI, release-readiness workflows and selected-trunk package version/tag automation are implemented separately; see CI.md and TODO.md. Hosted execution/enforcement still needs confirmation.
 
 Deliver scheduled/event-driven generation, immutable publication, discovery, authenticated fetching, integrity checks, and historical retention.
 

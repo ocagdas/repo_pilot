@@ -4,3 +4,5 @@ recursive-include tests *.py
 recursive-include .github *.yml *.yaml *.md
 recursive-exclude * __pycache__ *.py[cod]
 global-exclude settings.local.json
+recursive-include docs *.md
+include .github/CODEOWNERS
