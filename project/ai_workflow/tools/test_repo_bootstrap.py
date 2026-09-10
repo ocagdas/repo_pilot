@@ -72,6 +72,65 @@ class RepositoryBootstrapTest(unittest.TestCase):
         source = process.stdout if process.returncode == 0 else process.stderr
         return json.loads(source)
 
+    def test_project_config_used_for_all_commands_without_explicit_path(self):
+        config = json.loads(CONFIG.read_text(encoding='utf-8'))
+        config['semantic_index']['mode'] = 'disabled'
+        config['state_directory'] = '.ai_cache/custom'
+        project_config = self.repo / 'ai_workflow/bootstrap.json'
+        project_config.parent.mkdir()
+        project_config.write_text(json.dumps(config), encoding='utf-8')
+        def invoke(command):
+            result = subprocess.run([sys.executable, str(SCRIPT), command, '--repo', str(self.repo),
+                                     '--base-ref', 'main'], capture_output=True, text=True, encoding='utf-8')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return json.loads(result.stdout)
+        prepared = invoke('prepare')
+        self.assertEqual(prepared['semantic_index']['mode'], 'disabled')
+        self.satisfy_request(prepared)
+        invoke('complete')
+        self.assertTrue(invoke('status')['knowledge_fresh'])
+        self.assertTrue((self.repo / '.ai_cache/custom').is_dir())
+        self.assertFalse((self.repo / '.ai_cache/code_knowledge').exists())
+        explicit = self.command('prepare')  # helper supplies the distribution config explicitly
+        self.assertEqual(explicit['semantic_index']['mode'], 'auto')
+
+    def test_missing_project_config_falls_back_but_malformed_config_fails(self):
+        import repo_bootstrap
+        args = repo_bootstrap.parser().parse_args(['status', '--repo', str(self.repo)])
+        self.assertEqual(repo_bootstrap.effective_config(args, self.repo)['semantic_index']['mode'], 'auto')
+        path = self.repo / 'ai_workflow/bootstrap.json'
+        path.parent.mkdir()
+        path.write_text('{', encoding='utf-8')
+        with self.assertRaises(ValueError):
+            repo_bootstrap.effective_config(args, self.repo)
+
+    def test_personal_semantic_override_and_invocation_precedence(self) -> None:
+        local = self.repo / 'ai_workflow/settings.local.json'
+        local.parent.mkdir()
+        local.write_text(json.dumps({'schema_version': '1.0', 'settings': {'knowledge': {'mode': 'source'}}}), encoding='utf-8')
+        self.assertEqual(self.command('prepare')['semantic_index']['mode'], 'disabled')
+        error = self.command('prepare', '--knowledge-mode', 'index', expect_success=False)
+        self.assertIn('Required semantic index is unavailable', error['message'])
+
+    def test_personal_config_change_invalidates_completed_and_pending_analysis(self) -> None:
+        # Ignore local preferences as installed projects do, so source identity
+        # stays unchanged and only the effective configuration causes invalidation.
+        exclude = self.repo / '.git/info/exclude'
+        with exclude.open('a', encoding='utf-8') as handle:
+            handle.write('\n/ai_workflow/settings.local.json\n')
+        initial = self.command('prepare')
+        self.satisfy_request(initial)
+        self.command('complete')
+        local = self.repo / 'ai_workflow/settings.local.json'
+        local.parent.mkdir(exist_ok=True)
+        local.write_text(json.dumps({'schema_version': '1.0', 'settings': {'knowledge': {'mode': 'source'}}}), encoding='utf-8')
+        self.assertFalse(self.command('status')['knowledge_fresh'])
+        pending = self.command('prepare')
+        self.satisfy_request(pending)
+        local.write_text(json.dumps({'schema_version': '1.0', 'settings': {'knowledge': {'mode': 'auto'}}}), encoding='utf-8')
+        error = self.command('complete', expect_success=False)
+        self.assertIn('Configuration changed after preparation', error['message'])
+
     def custom_config(self, **semantic_changes: object) -> Path:
         config = json.loads(CONFIG.read_text(encoding="utf-8"))
         config["semantic_index"].update(semantic_changes)
@@ -214,6 +273,13 @@ class RepositoryBootstrapTest(unittest.TestCase):
         )
         self.assertEqual(branch_overlay["records"][0]["source_revision"], self.git("rev-parse", "HEAD"))
         self.assertEqual(worktree_overlay["records"][0]["source_revision"], "worktree")
+
+    def test_optional_backend_override_is_reported_without_launching_it(self) -> None:
+        default = self.command('prepare')
+        self.assertEqual(default['semantic_index']['optional_backend'], 'off')
+        selected = self.command('prepare', '--knowledge-backend', 'cgc')
+        self.assertEqual(selected['semantic_index']['optional_backend'], 'cgc')
+        self.assertFalse((self.repo / '.ai_cache/code_knowledge/cgc').exists())
 
     def test_semantic_index_auto_falls_back_when_absent(self) -> None:
         request = self.command("prepare")

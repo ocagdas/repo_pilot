@@ -30,10 +30,137 @@ The completion validator uses only the standard library and supports the keyword
 
 7 September 2026: all 37 tests passed locally on Linux: 20 bootstrap, 6 completion, 7 installation and 4 tooling setup tests. The three machine setup modes produced valid preview commands without target writes. Installer tests used an existing isolated environment containing the pinned official CLI. Fresh native or Conda dependency installation and Docker image execution were not run. Windows and macOS were not available.
 
-Added explicit UTF8 subprocess handling, platform neutral migration path keys, current interpreter test commands, and exact CLI version checking. Added native, venv and Conda setup planning plus Docker build instructions. JSON and YAML parsed successfully. The GitHub Actions matrix is supplied but has not run remotely.
+Added explicit UTF8 subprocess handling, platform neutral migration path keys, current interpreter test commands, and exact CLI version checking. Added native, venv and Conda setup planning plus Docker build instructions. JSON and YAML parsed successfully. Correction recorded 8 September 2026: no GitHub Actions workflow is present in the current checkout; the earlier claim that a matrix was supplied was incorrect. No remote run is established.
 
 ## Conda setup guidance update
 
 7 September 2026: five tooling tests passed locally using `python3 -m unittest discover -s tests -p test_tooling.py -v`. The new subprocess regression test uses the current Python interpreter and verifies that `--conda-name my_spec_tools` reaches the creation command in preview without installing an environment. Documentation links, code fences and diff whitespace were checked.
 
 The existing environment-name option now has CLI help, and successful Conda setup prints activation guidance. Actual Conda creation, post-install activation and Windows/macOS shell behaviour were not executed for this change. The full installation suite was not rerun for this focused setup/documentation update.
+
+## Configuration foundation
+
+8 September 2026: 52 tests passed locally on Linux: 30 package tests (6 completion, 9 installation, 10 settings, 5 tooling) and 22 bootstrap tests. Installed the exact requirements.txt Spec Kit commit into a fresh disposable venv at /tmp/repo-pilot-config-validation for the installer checks; the distribution lock and requirement were unchanged.
+
+Commands executed:
+
+```bash
+SPECIFY_BIN=/tmp/repo-pilot-config-validation/bin/specify python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s project/ai_workflow/tools -p 'test_*.py'
+```
+
+The bootstrap suite was rerun after adding the final ignored-settings invalidation regression. Settings coverage includes all precedence boundaries, list replacement/null reset, relative paths, two-directory clone identity reuse and checkout isolation, invalid settings, read-only inspection, conservative migration, and setup CLI overrides. Real installer tests exercise settings-selected integration, preservation of authored local settings, installation of the resolver, ignore rules, and rejection of invalid settings before target writes. Bootstrap tests exercise source/index override precedence and configuration invalidation of completed and pending analysis. Settings schema JSON parsing, documentation links/code fences and diff whitespace checks passed.
+
+The two-clone settings tests ran on one Linux machine; this is not a cross-machine artifact-sharing test. No alternate Spec Kit version, Conda activation, Windows/macOS execution, Docker build, remote CI, live model behaviour or semantic backend was tested in this update.
+
+## Settings command naming
+
+8 September 2026: renamed the settings creation command to `configure`, retaining `migrate` as a deprecated CLI alias. All 11 settings tests passed using `python3 -m unittest discover -s tests -p test_settings.py -v`, including both preview command paths and preservation checks. Diff whitespace checks passed. The full installation suite was not rerun for this command naming change.
+
+## Local Spec Kit versions and backend research
+
+8 September 2026: implemented official release/full-commit overrides, isolated environments, source records, staging compatibility checks, conservative upgrade previews and managed-file updates. The committed default lock, requirements and preset/extension compatibility constraints remain unchanged.
+
+All 66 Python tests passed on Linux: 44 package tests (6 completion, 9 installation, 11 settings, 13 toolchain/version tests, 5 tooling) and 22 bootstrap tests. Commands used the current Python interpreter, with these live-version inputs:
+
+```bash
+SPECIFY_BIN=/tmp/repo-pilot-config-validation/bin/specify \
+SPECIFY_ALTERNATE_BIN=/tmp/repo-pilot-version-pilot-speckit-6906bc582230bb752776e23287ee97990c1af743/bin/specify \
+SPECIFY_ALTERNATE_RECORD=/tmp/repo-pilot-v1.0.3.json \
+python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s project/ai_workflow/tools -p 'test_*.py'
+```
+
+The alternate was actually installed from official tag v1.0.3, resolved to 6906bc582230bb752776e23287ee97990c1af743. Setup exported a checked record. Both 1.0.4 and 1.0.3 ran actual public CLI staging commands. Tests exercised all three integrations on the alternate, exact installed commit verification, mismatched CLI rejection before target writes, offline record import, invalid-source rejection, and upgrade from 1.0.3 to 1.0.4 while preserving custom AI_CONTEXT.md. Upgrade preview made no target writes. Token/graph backends were not part of these executable tests.
+
+Additional environment checks actually executed:
+
+- Created the alternate Conda environment under /tmp/repo-pilot-conda-version-check using conda-forge and Python 3.12. Setup compatibility checks passed. Automatic environment discovery supported preview and installation into a disposable consumer project. Activation and ordinary python/specify commands passed in a child Bash session; this does not mean setup can activate its parent shell.
+- Built Docker images for default 1.0.4 and alternate 1.0.3 with the new SPEC_KIT_REF build argument. Non-root mounted-project preview/apply passed for both, with host file ownership and personal settings preserved. Tested a mounted project whose host tooling preference is Conda; the container correctly used its built CLI. The initial non-root test found an unreadable image source record; setting that non-secret record to mode 0644 fixed the issue. Added a dedicated container entry point to isolate image CLI selection from host setup preferences.
+- JSON schema parsing, documentation links/fences and diff whitespace checks passed. The Docker wrapper was validated through the container runs after the Python suite completed.
+
+Host native installation and Windows/macOS execution were not run. Native override isolation was verified in preview; its companion environment uses the exercised venv path. No remote CI, live coding agent behaviour, arbitrary-version certification, graph generation, cross-machine graph transfer or token reduction is claimed. Records pin Spec Kit source, not all transitive dependencies. The alternate compatibility result covers local staging of this engineering package, not distribution-wide certification.
+
+Online research is recorded in KNOWLEDGE_SOLUTIONS.md with primary-source links, a licensing distinction for GitNexus, and a proposed correctness/token-cost pilot. No candidate was installed or benchmarked, and no numerical token-saving claim was established.
+
+## Optional CGC and Sourcegraph adapters
+
+8 September 2026: validated on Linux with Python 3.13, CodeGraphContext 0.6.13, Kuzu 0.11.3 and MCP SDK 1.30.0 in a disposable venv. Default-off operation works without that optional environment. No Spec Kit pin or baseline requirement changed.
+
+The adapter suite has 14 tests covering default-off behavior, precedence/source policy, malformed settings, explicit runtime database isolation, missing/dirty/wrong-clone snapshots, revision-scoped literal Sourcegraph queries, locks, stderr version probing, failed-index invalidation, bundle identity/revision/checksum rejection, preserved existing databases, imported-path mapping, output limits, checkout races and redacted transport failures. Its Sourcegraph test executes the real MCP SDK handshake and tool request through an HTTP protocol fixture with authentication and redirects disabled; it is not a live Sourcegraph deployment test.
+
+Actual CGC execution indexed a small Python Git repository, queried it over stdio MCP, exported a .cgc bundle plus provenance sidecar, imported into a differently named second clone with the same canonical origin/commit, and queried that imported graph without reparsing. Assertions checked that returned paths identify existing files in the receiving clone. Import uses a fresh database, preserves existing ones, and maps CGC's bundle-name-suffixed graph root to the clone. Both clones were on the same Linux machine; cross-machine transfer was not exercised.
+
+Live checks caught and fixed CGC context selection overriding KUZUDB_PATH (now explicit --db-path and runtime overrides), version output on stderr, and the import destination's extra bundle-name component. Initial indexing also generated .cgcignore; after reviewing and committing it in the disposable fixture, the clean-revision check passed. No generated exclusion file in a consumer repository is automatically committed.
+
+Reproduction environment and commands:
+
+```bash
+python -m pip install -r requirements-knowledge.txt
+SPECIFY_BIN=/tmp/repo-pilot-config-validation/bin/specify \
+SPECIFY_ALTERNATE_BIN=/tmp/repo-pilot-version-pilot-speckit-6906bc582230bb752776e23287ee97990c1af743/bin/specify \
+SPECIFY_ALTERNATE_RECORD=/tmp/repo-pilot-v1.0.3.json \
+/tmp/repo-pilot-graph-validation/bin/python -m unittest discover -s tests -v
+/tmp/repo-pilot-graph-validation/bin/python -m unittest discover -s project/ai_workflow/tools -p 'test_*.py'
+```
+
+All 81 tests passed: 58 package tests (including all 14 backend tests and real default/alternate Spec Kit installation checks) and 23 bootstrap tests. No tests skipped in these final runs. Schema JSON, documentation code fences, default-off status and diff whitespace were checked. Live Sourcegraph, Windows/macOS, graph execution under Conda/Docker, large-repository performance, C/C++ compiler accuracy, cross-machine bundle portability, automatic CI publication, branch semantic composition and token savings remain unverified or unimplemented. Earlier Spec Kit environment evidence does not establish graph backend support on those environments.
+
+## Static/editable installation and optional dependencies
+
+8 September 2026: added an installable repo-pilot console command, static (default) and editable setup modes, and minimal (default), CGC, Sourcegraph and all dependency profiles. The selected official Spec Kit source remains provisioned separately by setup_tooling.py, preserving version override isolation. Direct pip installation manages Repo Pilot and its extras only. The upstream pin and requirements.txt remain unchanged.
+
+Actual Linux checks built and installed static and editable distributions in disposable Python environments. The tests changed both launcher source and project payload: the editable installation saw the changes on its next invocation, while the static installation retained its original copies. The static launcher still worked after moving its source checkout. Installed wheels contained the hidden Codex/Copilot/Cursor-related payload resources, manifests and knowledge utilities; static consumer installation and authored-file preservation through upgrade were exercised with the real pinned Specify CLI.
+
+Complete setup was executed in a fresh venv using static/minimal, then repeated in that environment using editable/Sourcegraph. Both passed compatibility staging. The installed command reported its source mode/location, and pip check found no broken dependencies. CGC/all extras were checked against the previously exercised pinned requirements; this update did not reinstall or benchmark CGC.
+
+Final regression commands:
+
+```bash
+REPO_PILOT_PACKAGE_TESTS=1 \
+SPECIFY_BIN=/tmp/repo-pilot-config-validation/bin/specify \
+SPECIFY_ALTERNATE_BIN=/tmp/repo-pilot-version-pilot-speckit-6906bc582230bb752776e23287ee97990c1af743/bin/specify \
+SPECIFY_ALTERNATE_RECORD=/tmp/repo-pilot-v1.0.3.json \
+/tmp/repo-pilot-graph-validation/bin/python -m unittest discover -s tests -v
+/tmp/repo-pilot-graph-validation/bin/python -m unittest discover -s project/ai_workflow/tools -p 'test_*.py'
+```
+
+New native/Conda profile commands were tested in preview; fresh native/Conda installations with the new launcher were not run. Windows/macOS remain unverified. Static mode here freezes Repo Pilot code/payload, not all transitive dependencies or already installed consumer files. Editable mode requires the source checkout to remain available and still needs reinstalling for dependency/entry-point changes.
+
+All 84 tests passed in the final run: 61 package tests and 23 bootstrap tests, with no skips. Static/minimal and editable/minimal Docker images built successfully. Container runs verified static package location, next-run editable source-mount changes, static isolation from those changes, and default static non-root consumer installation. These Docker checks used the default Spec Kit version; alternate image versions and optional graph execution in these new image modes were not rerun. Documentation links/fences, TOML parsing and diff whitespace checks passed.
+
+## Baseline reconciliation
+
+8 September 2026: reviewed the pending installation, toolchain, settings, packaging, bootstrap and retrieval changes against the roadmap and readiness documentation. This pass changed documentation only. It did not commit or release the pending implementation.
+
+ROADMAP.md and IMPLEMENTATION_PLAN.md now distinguish delivered configuration/tooling, partial retrieval/full-snapshot sharing, and planned semantic composition/publication. Corrected obsolete YAML settings paths, upgrade guidance and backend-research wording. Expanded the settings reference to match the resolver. Repository inspection found no .github/workflows/validate.yml or other tracked workflow; corrected the included-CI claims in STATUS.md, INSTALLATION.md, REPOSITORY.md and the earlier validation entry. Adding regression CI is explicitly tracked as follow-up work.
+
+Fresh checks ran on Linux with Python 3.13.14 using the existing validation environments:
+
+```bash
+REPO_PILOT_PACKAGE_TESTS=1 \
+SPECIFY_BIN=/tmp/repo-pilot-config-validation/bin/specify \
+SPECIFY_ALTERNATE_BIN=/tmp/repo-pilot-version-pilot-speckit-6906bc582230bb752776e23287ee97990c1af743/bin/specify \
+SPECIFY_ALTERNATE_RECORD=/tmp/repo-pilot-v1.0.3.json \
+/tmp/repo-pilot-graph-validation/bin/python -m unittest discover -s tests -v
+/tmp/repo-pilot-graph-validation/bin/python -m unittest discover -s project/ai_workflow/tools -p 'test_*.py'
+git diff --check
+```
+
+All 84 tests passed with no skips: 61 package tests and 23 bootstrap tests. This includes actual default/alternate Spec Kit staging, installer preservation, disposable static/editable package installation and the Sourcegraph MCP protocol fixture. Existing tests use their running interpreter for child Python processes. JSON/YAML/TOML parsing, Python syntax, local inline Markdown file links, code fences and package/upstream pin consistency checks passed. Package version 1.1.0 and the upstream v1.0.4 source pin remain unchanged and consistent with requirements.txt.
+
+No fresh Docker/Conda execution, real CGC indexing, live Sourcegraph deployment, Windows/macOS, remote CI, live agent or token benchmark ran in this reconciliation. Earlier environment and graph evidence above remains historical evidence with its original scope. The next product milestone is the representative repository pilot described in IMPLEMENTATION_PLAN.md.
+
+## Review fixes — 10 September 2026
+
+Corrected project bootstrap configuration resolution for prepare/complete/status, including the installed launcher. All three share one helper; explicit --config wins, project configuration is next, and the bundled fallback is used only when no project configuration exists. Malformed project configuration fails rather than silently falling back.
+
+CLI discovery now checks configured locations, the current interpreter's scripts directory and executable candidates across PATH, validating selected version and alternate source commit before accepting them. This includes a matching alternate behind the launcher's mismatched default CLI on PATH. Explicit --specify is not substituted. Native setup verifies the user scripts directory when it installs with --user, or the current interpreter's scripts directory otherwise, without choosing an unrelated executable from PATH.
+
+CGC import staging is enclosed in a temporary-directory context covering metadata parsing, database construction and closing. Tests inject failures at all three boundaries and assert that no staging directory or installed database remains. A real CGC import of the existing fixture and a subsequent MCP query also passed on Linux; returned paths existed in the receiving clone and no staging directory remained. The graph was reused, not freshly parsed in this run.
+
+The settings schema now uses one $defs/settings definition for both global settings and per-project user settings. The real Draft 2020-12 validator accepted representative values and rejected invalid backend values in both scopes. Bootstrap's duplicated configuration-loading blocks were removed.
+
+The review's command reproductions now pass: implicit and explicit project bootstrap both preserve disabled semantic mode and the custom cache root; selecting the alternate source record succeeds without --specify, as well as with it. Native user/active-environment path selection was regression-tested with simulated schemes; no bare-host native installation, Windows/macOS, Docker or Conda run is claimed for this change.
+
+Final result: all 91 tests passed with no skips (66 package tests, 25 bootstrap tests). The package run used REPO_PILOT_PACKAGE_TESTS=1 and the same default/alternate CLI and record paths documented above, with /tmp/repo-pilot-graph-validation/bin/python. It included real static/editable builds, a static launcher after moving its source checkout, verified alternate discovery without --specify, and the existing preservation/upgrade checks. Sourcegraph coverage remains a protocol fixture. Syntax, schema validation, documentation links/fences, pin consistency and diff whitespace checks passed.

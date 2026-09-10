@@ -16,8 +16,8 @@ No remote has been created or pushed by this task. Choose a licence and ownershi
 
 This tooling repository is distinct from your firmware, service or data science repository. Install it into those repositories with install.py. Commit the agreed generated project instructions there so every clone receives the same workflow version.
 
-The included .github/workflows/validate.yml runs utility and installation checks on Linux, Windows and macOS, plus a Linux Docker build. These jobs install the pinned official Spec Kit dependency. They do not install a coding agent or require an LLM subscription. You will see the first actual remote platform results after pushing to GitHub.
+No .github/workflows/validate.yml is currently included. Run the local checks in CONTRIBUTING.md before publishing. Adding a regression workflow for the pinned Spec Kit CLI, platform tests and Docker checks is follow-up work; pushing this checkout alone will not run those checks. Record remote results in VALIDATION.md only after the jobs actually execute.
 
-Keep upstream.lock.json and requirements.txt in agreement. Retest a new official Spec Kit version before changing the pin. The preset and extension compatibility requirements must change in the same review. Initial installation checks reject a different CLI version.
+Keep upstream.lock.json and requirements.txt in agreement. Retest a new official Spec Kit version before changing the pin. The preset and extension compatibility requirements must change in the same review. Installation verifies the selected CLI version and stages compatibility checks. Personal release/commit overrides leave the distribution pin unchanged; see TOOLCHAIN_VERSIONS.md.
 
-Retain existing project commands and authored documents when upgrading. Current install.py intentionally rejects conflicts rather than guessing how to merge them. A general upgrade manager is future work.
+Retain existing project commands and authored documents when upgrading. Initial installation rejects conflicting files. For installations with an engineering-install.json ledger, install.py --upgrade previews updates to unchanged managed files while preserving authored differences; --apply performs the reviewed update. Older installations without that ledger require manual reconciliation. See TOOLCHAIN_VERSIONS.md.

@@ -1,6 +1,8 @@
 # Quickstart: install, configure, and use Spec Kit
 
-This tutorial installs this repository's engineering package around official GitHub Spec Kit, configures a software project, and walks through a first feature. It describes the current package, which requires Specify CLI 1.0.4. Personal settings hierarchies, local version overrides, shared graph downloads, and automatic trunk detection are planned in [ROADMAP.md](ROADMAP.md), not available commands.
+Choose a **static** snapshot or **editable** source-linked installation, with `minimal`, `cgc`, `sourcegraph` or `all` dependencies. See [installation modes](INSTALL_MODES.md). Setup now installs the `repo-pilot` command as well as Spec Kit.
+
+This tutorial installs this repository's engineering package around official GitHub Spec Kit, configures a software project, and walks through a first feature. It describes the current package, which defaults to Specify CLI 1.0.4. Personal settings hierarchies are available; see [the settings guide](project/ai_workflow/settings.md). Local Spec Kit version overrides are available in [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md). Shared graph downloads and automatic trunk detection remain planned in [ROADMAP.md](ROADMAP.md).
 
 ## 1. Prepare two separate directories
 
@@ -27,7 +29,7 @@ Choose **one** method. Run from the `repo_pilot` directory and replace example p
 | Conda / Miniforge | You already manage tools with Conda | Conda in an initialised shell |
 | Docker | You want installation tooling in a container | Docker with Linux containers; target directory accessible to Docker |
 
-All four use the same pinned Spec Kit source and install the same project package. Fresh native/Conda installation and Docker execution have not been verified here; see [VALIDATION.md](VALIDATION.md).
+All four default to the same pinned source and install the same package; explicit version overrides are also available. Linux venv, alternate-version Conda and default/alternate Docker paths have been exercised. Host native installation and Windows/macOS remain unverified; see [VALIDATION.md](VALIDATION.md).
 
 ### Option A: venv
 
@@ -364,4 +366,8 @@ This validates report structure, coverage and evidence references; it does not e
 
 Commit and share the agreed project guidance and workflow files. In another clone, reuse those files; do not rerun the project installer merely to regenerate them. On another machine, obtain this tooling distribution and perform step 2 to create machine-local tooling, plus the project's usual development environment setup. Then open the configured clone and start at step 6.
 
-Current caches are local. Portable graph bundles, shared trunk publication, personal configuration layers and local Spec Kit version overrides are described in [ROADMAP.md](ROADMAP.md) and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Until implemented, the installer enforces the distribution's pinned CLI version.
+Current caches are local. Portable graph bundles and shared trunk publication are described in [ROADMAP.md](ROADMAP.md) and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For local Spec Kit version selection and conservative upgrades, see [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md).
+
+## Optional graph retrieval
+
+CGC and Sourcegraph default to off. Follow [knowledge_backends.md](project/ai_workflow/knowledge_backends.md) for optional dependencies, project/local selection, querying and CGC snapshot transfer. Existing installations can preview `install.py --upgrade` to obtain the new companion files.

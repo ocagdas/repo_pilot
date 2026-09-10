@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 from typing import Any, Iterable
+from settings import bootstrap_config, SettingsError
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -509,6 +510,8 @@ def semantic_index_status(
         )
 
     return {
+        "optional_backend": config.get("optional_knowledge", {}).get("knowledge", {}).get("backend", "off"),
+        "optional_backend_status_command": "python3 ai_workflow/tools/knowledge_backend.py status",
         "mode": mode,
         "current_view_complete": mode != "disabled" and current_view_complete,
         "missing_current_layers": missing_layers,
@@ -598,10 +601,25 @@ def render_delta_markdown(delta: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def effective_config(args, repo):
+    """Resolve project configuration identically for prepare, complete and status."""
+    project_config = repo / 'ai_workflow/bootstrap.json'
+    if args.config:
+        config_path = Path(args.config).resolve()
+    elif project_config.exists() or project_config.is_symlink():
+        config_path = project_config
+    else:
+        config_path = DEFAULT_CONFIG
+    knowledge = {key: value for key, value in (
+        ('mode', getattr(args, 'knowledge_mode', None)),
+        ('backend', getattr(args, 'knowledge_backend', None))) if value is not None}
+    return bootstrap_config(load_config(config_path), repo, getattr(args, 'user_config', None),
+                            {'knowledge': knowledge})
+
+
 def prepare(args: argparse.Namespace) -> dict[str, Any]:
     repo = repository_root(Path(args.repo))
-    config_path = Path(args.config).resolve() if args.config else DEFAULT_CONFIG
-    config = load_config(config_path)
+    config = effective_config(args, repo)
     config_fingerprint = stable_hash(config)
     head = head_commit(repo)
     branch = branch_name(repo, args.branch)
@@ -823,8 +841,7 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
 
 def complete(args: argparse.Namespace) -> dict[str, Any]:
     repo = repository_root(Path(args.repo))
-    config_path = Path(args.config).resolve() if args.config else DEFAULT_CONFIG
-    config = load_config(config_path)
+    config = effective_config(args, repo)
     branch = branch_name(repo, args.branch)
     selected = branch_selected(branch, config)
     state_root = branch_state_root(repo, branch, selected, config)
@@ -880,8 +897,7 @@ def complete(args: argparse.Namespace) -> dict[str, Any]:
 
 def status(args: argparse.Namespace) -> dict[str, Any]:
     repo = repository_root(Path(args.repo))
-    config_path = Path(args.config).resolve() if args.config else DEFAULT_CONFIG
-    config = load_config(config_path)
+    config = effective_config(args, repo)
     branch = branch_name(repo, args.branch)
     selected = branch_selected(branch, config)
     state_root = branch_state_root(repo, branch, selected, config)
@@ -892,6 +908,7 @@ def status(args: argparse.Namespace) -> dict[str, Any]:
     fresh = bool(
         state
         and state.get("source_commit") == head
+        and state.get("config_fingerprint") == stable_hash(config)
         and state.get("worktree_fingerprint") == fingerprint
     )
     return {
@@ -911,6 +928,9 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("command", choices=("prepare", "complete", "status"))
     result.add_argument("--repo", default=".")
     result.add_argument("--config")
+    result.add_argument("--user-config")
+    result.add_argument("--knowledge-backend", choices=("off", "cgc", "sourcegraph"))
+    result.add_argument("--knowledge-mode", choices=("auto", "source", "index"))
     result.add_argument("--branch")
     result.add_argument("--base-ref")
     result.add_argument("--force-full", action="store_true")
@@ -929,7 +949,7 @@ def main() -> int:
             result = status(args)
         print(json.dumps(result, indent=2 if args.pretty else None, sort_keys=True))
         return 0
-    except (BootstrapError, OSError, json.JSONDecodeError) as error:
+    except (BootstrapError, SettingsError, OSError, json.JSONDecodeError) as error:
         print(json.dumps({"status": "error", "message": str(error)}), file=sys.stderr)
         return 2
 

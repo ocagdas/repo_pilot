@@ -58,6 +58,26 @@ class InstallationTests(unittest.TestCase):
             text=(self.repo/relative/'speckit-implement/SKILL.md').read_text()
             self.assertIn('Engineering integration',text)
             self.assertIn('Pre-Execution Checks',text)
+    def test_settings_select_integration_and_remain_preserved(self):
+        config = self.repo / 'ai_workflow/settings.local.json'
+        config.parent.mkdir(parents=True)
+        content = json.dumps({'schema_version': '1.0', 'settings': {'agent': {'integrations': ['copilot']}}})
+        config.write_text(content, encoding='utf-8')
+        result = self.install('--apply')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.repo / '.github/skills/speckit-implement/SKILL.md').is_file())
+        self.assertEqual(config.read_text(encoding='utf-8'), content)
+        self.assertIn('/ai_workflow/settings.local.json', (self.repo / '.gitignore').read_text(encoding='utf-8'))
+        self.assertTrue((self.repo / 'ai_workflow/tools/settings.py').is_file())
+
+    def test_invalid_settings_stop_before_installation(self):
+        config = self.repo / 'ai_workflow/settings.local.json'
+        config.parent.mkdir(parents=True)
+        config.write_text('{"schema_version": "1.0", "settings": {"approvals": false}}', encoding='utf-8')
+        result = self.install('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.repo / 'AI_CONTEXT.md').exists())
+
     def test_known_legacy_file_is_archived(self):
         self.repo.mkdir()
         # The unchanged v6 entry point is reconstructed from the sibling baseline.

@@ -2,9 +2,9 @@
 
 For a guided first setup followed by configuration and usage, start with [QUICKSTART.md](QUICKSTART.md).
 
-Use this repository as the tooling distribution. Keep it outside the software repository you want to configure. Machine setup installs official Spec Kit; install.py then installs the project files. The same tooling environment can serve multiple project clones.
+Use this repository as the tooling distribution. Keep it outside the software repository you want to configure. Machine setup installs the repo-pilot launcher and official Spec Kit; install.py then installs the project files. The same tooling environment can serve multiple project clones.
 
-The default is a Python virtual environment. Native Python, Conda and Docker are alternatives. None of these methods installs a coding assistant, compiler, board SDK, semantic index engine or model subscription.
+The default is a Python virtual environment. Native Python, Conda and Docker are alternatives. Minimal setup does not install graph dependencies. Add `--extras cgc`, `sourcegraph` or `all` for optional clients; use `--static` (default) or `--editable` to select source update behavior. See [INSTALL_MODES.md](INSTALL_MODES.md). Coding assistants, compilers, board SDKs and model subscriptions remain separate.
 
 ## Prerequisites and validation scope
 
@@ -15,7 +15,7 @@ The default is a Python virtual environment. Native Python, Conda and Docker are
 | Conda | Anaconda Prompt or initialised shell | Initialised shell | Initialised shell | Conda or Miniforge; environment includes Python, pip and Git |
 | Docker | Docker Desktop using Linux containers | Docker Engine | Docker Desktop using Linux containers | Docker running; target directory exists and is shared with Docker |
 
-These paths are supplied, but only Linux utility and integration execution has been tested here. Native dependency installation, Conda, Windows, macOS and Docker image execution are not claimed as tested. The supplied GitHub Actions workflow will exercise three operating systems and a Linux Docker build after you push it. It has not run remotely yet.
+Linux utility/integration execution, alternate-version Conda setup and activation, and default/alternate Docker image builds with non-root installation have been tested. Host native installation and Windows/macOS execution remain unverified. No GitHub Actions workflow is currently included. Regression CI remains follow-up work; no remote platform results are available.
 
 If Python, Git, Conda or Docker is missing, install it using your organisation's approved method first. Some Linux distributions package venv separately. Do not override an operating system managed Python restriction; use venv or Conda if native pip refuses installation.
 
@@ -49,6 +49,8 @@ python3 install.py /path/to/project --specify /path/to/toolenv/bin/specify --int
 On Windows, the equivalent executable is C:\path\to\toolenv\Scripts\specify.exe. Quote paths containing spaces. Virtual environments are recreated per machine and are never pushed to Git or copied between operating systems.
 
 ## Native Python
+
+Native setup verifies the executable in the same scripts directory used for installation: the user scripts directory for `pip --user`, or the current environment's scripts directory otherwise. An unrelated `specify` on PATH is not used for setup verification.
 
 Linux and macOS:
 
@@ -130,7 +132,7 @@ specify version
 
 The interpreter should belong to the selected environment and the CLI should report 1.0.4. IDE terminals may need reopening after initialisation; IDE run/debug interpreter selection is separate from terminal activation. `conda run -n my_spec_tools ...` remains an option when activation is inconvenient.
 
-See the official [Conda shell initialisation documentation](https://docs.conda.io/projects/conda/en/latest/commands/init.html) for shell-specific details. These instructions do not establish that Conda creation or activation was executed in this repository's validation environment.
+See the official [Conda shell initialisation documentation](https://docs.conda.io/projects/conda/en/latest/commands/init.html) for shell-specific details. Conda creation and activation were exercised on Linux in a child Bash session for the version-override pilot; other shells/platforms remain unverified. See VALIDATION.md.
 
 ## Docker
 
@@ -162,6 +164,10 @@ The target directory must already exist. Omit --apply to preview. Only the mount
 
 The image downloads dependencies while building. Runtime project staging uses the official CLI's bundled assets. The Python image tag and transitive dependencies are not fully locked by digest; upstream.lock.json pins Spec Kit itself, not the entire operating system or dependency graph.
 
+## Choose a Spec Kit version
+
+The default stays pinned to 1.0.4. Use `speckit.ref` in project/personal settings or `--speckit-ref` to select another official release or full commit. See [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md) for environment isolation, Conda names, Docker build arguments, record export/import and upgrade previews.
+
 ## Choose agents
 
 Any installation method can select codex, cursor-agent or copilot. Repeat the integration option to prepare one project for all three:
@@ -174,7 +180,7 @@ Replace python with python3 or py -3 where appropriate. The installer uses only 
 
 ## Existing Spec Kit projects
 
-The full installer is intentionally conservative and stops on differing existing files. It is not a general upgrade or merge tool. You can use the official CLI directly inside an existing project:
+The full installer is intentionally conservative and stops on differing existing files. It is not a general merge tool. The new --upgrade option updates only unchanged files recorded by an earlier installation ledger; older installations without a ledger still require manual merging. You can use the official CLI directly inside an existing project:
 
 ```text
 specify extension add --dev /path/to/this/tooling/extension

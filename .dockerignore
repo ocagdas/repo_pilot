@@ -1,0 +1,17 @@
+.git
+.venv
+.venv-speckit-*
+.toolchains
+**/__pycache__
+**/*.py[cod]
+**/.ai_cache
+**/settings.local.json
+*.setup.lock
+/.codex
+/.agents
+
+**/.codegraphcontext
+
+build
+dist
+*.egg-info

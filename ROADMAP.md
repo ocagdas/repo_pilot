@@ -1,6 +1,6 @@
 # Roadmap: portable project guidance and reusable code knowledge
 
-Status: proposed, 7 September 2026. These are planned capabilities. STATUS.md and VALIDATION.md remain the sources for current readiness and executed checks.
+Status: reconciled with the working tree on 8 September 2026. Configuration, version overrides and packaging are implemented; local retrieval and manual full-snapshot sharing are partial deliveries of the knowledge roadmap. STATUS.md and VALIDATION.md remain the sources for current readiness and executed checks.
 
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for work packages, dependencies and acceptance checks.
 
@@ -14,11 +14,15 @@ Keep the knowledge engine usable independently of Spec Kit, with this package pr
 
 The package supplies project configuration, engineering guidance, agent entry points, an upstream Spec Kit pin, and installation helpers. Bootstrap creates local file inventories, branch deltas, and worktree overlays. It checks basic semantic manifests but does not execute an indexing backend, compose semantic graphs, or publish/fetch shared artifacts.
 
+The separate knowledge adapter provides default-off CGC retrieval and Sourcegraph revision-scoped keyword searches. CGC explicitly rebuilds a clean revision and exports/imports checked full snapshots. Bootstrap reports the selected backend without invoking it. Static/editable packaging and optional dependency profiles are also delivered; see INSTALL_MODES.md.
+
 Current base selection picks the first configured reference that exists, then uses its merge-base with HEAD. It does not infer parent trunks. Large-repository performance and live agent token savings have not been established.
 
 ## Configuration hierarchy
 
-Proposed precedence, lowest to highest:
+The resolver uses JSON files. See [settings.md](project/ai_workflow/settings.md) for current fields, paths and configuration. Broader knowledge controls remain future work.
+
+Implemented precedence, lowest to highest:
 
 | Order | Scope | Purpose | Sharing |
 | --- | --- | --- | --- |
@@ -31,13 +35,15 @@ Proposed precedence, lowest to highest:
 
 This interprets the requested hierarchy as reading user defaults first, overlaying shared project settings, then personal project and checkout settings. To supersede a team default, set the preference in the personal project layer. Within user configuration, merge general settings before the matching project entry.
 
-Proposed locations are an OS-appropriate user configuration directory containing `repo-pilot/config.yaml` and project entries, committed `ai_workflow/settings.yaml`, and ignored `ai_workflow/settings.local.yaml`. Final naming and migration are phase 1 decisions. Existing project.yaml and bootstrap.json remain authoritative until explicit migration; avoid duplicate active settings.
+Implemented locations are an OS-appropriate user configuration directory containing `repo-pilot/config.json` with general settings and project entries, committed `ai_workflow/settings.json`, and ignored `ai_workflow/settings.local.json`. Existing bootstrap.json navigation fields enter at shared-project precedence before settings.json. Project policy and commands remain in their existing files; configuration does not copy them into a second authority.
 
 Recursively merge mappings; replace lists/scalars; reject unknown keys; define null/reset behaviour in the schema. Resolve relative paths against the declaring file. Provide effective-configuration inspection showing each setting's origin with secrets redacted. All commands must use the same resolver.
 
 Separate personal preferences from mandatory project checks and runtime permissions. Overrides must not silently downgrade required checks or bypass execution permissions. Diagnose conflicting choices rather than silently changing behaviour.
 
 ### User-selectable behaviour
+
+Current support includes retrieval mode, backend selection, integration selection and query limits supplied on the knowledge CLI. The origin/fetch/update policies, cache budgets, overlay exports and explanation preferences below are planned; unsupported settings are rejected. Auto mode reports when source fallback is needed; the adapter does not read source on the caller's behalf.
 
 - Retrieval mode: `auto`, `index`, or `source`. Source mode bypasses graph/index queries while retaining project guidance. Index mode requires compatible knowledge for the requested scope or reports what is missing. Auto uses compatible knowledge and falls back to current source with visible coverage limits.
 - Index origin: shared prebuilt artifacts, local generation, or both.
@@ -101,11 +107,15 @@ CI generates configured trunk snapshots on selected events or schedules, validat
 
 ### Phase 1 — Configuration and portable contracts
 
+Status: Configuration foundation delivered. Pilot selection and the full artifact/overlay contract remain open.
+
 Deliver schema/resolver, precedence, provenance inspection, personal scopes, repository identity, and artifact/overlay contracts. Plan migration without overwriting customised files. Explain incompatible settings and expose effective configuration fingerprints.
 
 Exit: verify merge rules and two-clone personal project reuse with isolated checkout overrides. Preserve current defaults. Select a representative pilot and record languages, size, build variants, and trunk structure.
 
 ### Phase 2 — Reproducible Spec Kit overrides
+
+Initial implementation delivered; see [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md) for scope and validation limits.
 
 Deliver version resolution, isolated environments, local toolchain records, staging compatibility checks, and upgrade previews while leaving the distribution pin unchanged.
 
@@ -113,11 +123,15 @@ Exit: exercise the default and at least one selected alternative using actual CL
 
 ### Phase 3 — Useful local indexing and retrieval
 
+Status: Partial: clean-revision CGC retrieval and Sourcegraph keyword queries are implemented. Semantic incremental updates, compiler/build-context accuracy and a measured agent comparison remain open.
+
 Select one backend using the pilot's language/build needs. Deliver bounded fact queries, source fallback, branch/worktree updates, and evidence-linked summaries where useful.
 
 Exit: validate results against source/build evidence, including deletions, renames, header/configuration changes, and dirty reversions. Compare identical source-only and index-assisted tasks. Measure cold generation, unchanged-session startup, incremental refresh, retrieval accuracy, and actual agent tokens. Set numerical targets from pilot evidence rather than assuming savings.
 
 ### Phase 4 — Multiple trunks and portable reuse
+
+Status: Partial manual sharing only: full CGC snapshots have been transferred between two local clones at the same revision. Trunk selection, composed semantic overlays, shared immutable cache and two-machine validation remain open.
 
 Deliver trunk inference with overrides, ancestor snapshot selection, exact-base overlays, shared local cache, and bundle export/import.
 
@@ -125,11 +139,15 @@ Exit: demonstrate release/RC feature branches across two clones and two machines
 
 ### Phase 5 — CI publication and team consumption
 
+Status: Planned. A repository regression CI workflow is also absent and tracked separately in IMPLEMENTATION_PLAN.md.
+
 Deliver scheduled/event-driven generation, immutable publication, discovery, authenticated fetching, integrity checks, and historical retention.
 
 Exit: run an actual remote pipeline; a second developer consumes a snapshot and computes the needed local overlay. Demonstrate offline reuse, interrupted-download recovery, invalid-artifact rejection, and retention protecting active bases.
 
 ### Phase 6 — Scale and broader coverage
+
+Status: Planned, dependent on pilot correctness and performance evidence.
 
 Improve incremental CI builds, cross-trunk deduplication, dependency invalidation, summary reuse, retention, additional language adapters, and optional agent hooks. Consider non-ancestor reuse only if evidence justifies its complexity.
 
@@ -138,9 +156,13 @@ Exit: publish repeatable large-repository results for time, storage, network tra
 ## Decisions to settle
 
 - Pilot repository, dominant languages, build variants, and actual trunk naming/history.
-- Acceptance of user defaults → shared project → personal project → checkout precedence.
+- Any future changes to the implemented settings precedence and supported preference fields.
 - Backend suitability for portable queries and correct incremental updates.
 - Initial artifact host, credentials, publication cadence, and retention budget.
 - Which workflow settings are personal preferences versus mandatory project requirements.
 
 Phases 1–2 establish reproducible settings/tooling. Phases 3–4 prove knowledge quality and reuse before central publication in phase 5. Update STATUS.md and VALIDATION.md as implementation and evidence arrive; this document does not change readiness claims.
+
+## Backend pilot update
+
+CGC and Sourcegraph adapters are implemented behind a default-off selector. CGC supports full clean-revision snapshots and portable bundle transfer; Sourcegraph provides centralized revision-scoped retrieval. Trunk-plus-branch semantic composition, automated CI publishing/fetching and measured token reduction remain future milestones.

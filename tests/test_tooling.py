@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('setup_tooling', ROOT/'setup_tooling.py')
@@ -38,6 +39,20 @@ class ToolingTests(unittest.TestCase):
         command = plan['commands'][0]
         self.assertEqual(command[command.index('--name') + 1], 'my_spec_tools')
         self.assertNotIn('conda activate', result.stdout)
+
+    def test_native_user_install_and_verification_share_scripts_scheme(self):
+        with patch.object(module, 'native_user_install', return_value=True), \
+             patch.object(module.sysconfig, 'get_preferred_scheme', return_value='test_user'), \
+             patch.object(module.sysconfig, 'get_path', return_value='/user/bin') as get_path:
+            self.assertIn('--user', module.commands('native', Path('.'), 'unused')[0])
+            self.assertIn('--user', module.package_command('native', Path('.'), 'unused'))
+            self.assertEqual(module.native_scripts_directory(), Path('/user/bin'))
+            get_path.assert_called_once_with('scripts', scheme='test_user')
+        with patch.object(module, 'native_user_install', return_value=False), \
+             patch.object(module.sysconfig, 'get_path', return_value='/active/bin') as get_path:
+            self.assertNotIn('--user', module.commands('native', Path('.'), 'unused')[0])
+            self.assertEqual(module.native_scripts_directory(), Path('/active/bin'))
+            get_path.assert_called_once_with('scripts')
 
     def test_official_pin_consistency(self):
         import json

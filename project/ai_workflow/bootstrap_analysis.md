@@ -8,6 +8,8 @@ At the beginning of a repository session, run:
 python3 ai_workflow/tools/repo_bootstrap.py prepare
 ```
 
+All three commands (`prepare`, `complete`, `status`) use the target repository's `ai_workflow/bootstrap.json` by default, including through the installed `repo-pilot bootstrap` command. `--config` overrides it; the bundled configuration is used only when the project has none. Invalid project configuration is an error, not a fallback.
+
 Read the JSON result. Inspect semantic status before acting on `action_required`. If it is `none`, no prose analysis refresh is requested, but semantic refresh may still be needed. If it is `full_analysis` or `incremental_analysis`, complete the analysis request before relying on repository knowledge.
 
 Inspect the returned `semantic_index` object:
@@ -72,3 +74,7 @@ The command refuses completion if the repository changed after the request was p
 An initial full analysis means a fresh inventory and structural map, not proof that every function was understood. Record inspected components, unexplored areas, source revision and configuration. Expand analysis to callers, includers, configuration consumers and tests when dependencies are uncertain. Never rely on changed files alone for impact analysis.
 
 Completion checks file presence and repository identity. It does not validate the truth or depth of prose, nor certify semantic artefacts. In required semantic mode, all necessary current layers must already exist before prepare succeeds. Run an explicitly configured adapter to refresh them and retry; a command declaration alone is insufficient.
+
+## Optional CGC / Sourcegraph retrieval
+
+Inspect `semantic_index.optional_backend`, then follow [knowledge_backends.md](knowledge_backends.md). These default-off adapters have a separate `status`/`query` entry point; bootstrap does not launch them. Apply the same invocation override when querying. Their snapshots do not satisfy the legacy multi-layer semantic manifest contract.

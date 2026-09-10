@@ -11,3 +11,7 @@ Read current source and the configured build system. A new inventory is a map, n
 During implementation, use the engineering lifecycle in `ai_workflow/lifecycle.md`. At completion, report every task and acceptance criterion as completed, incomplete or untouched with actual evidence. A self review is not independent review. Do not claim unavailable checks passed. Existing user authorisation counts; request decisions only for unresolved scope or actions outside it.
 
 On Windows, use the available Python 3.11 or newer interpreter, such as `py -3` or `python`, in place of `python3` in procedural examples. Within a venv or Conda session, use that environment interpreter. Never assume a command name means the tool is installed.
+
+Personal tooling and knowledge preferences use the resolver documented in `ai_workflow/settings.md`. Do not interpret personal preferences as overrides of project quality gates or runtime permissions.
+
+Optional retrieval: follow `ai_workflow/knowledge_backends.md`. Run `python3 ai_workflow/tools/knowledge_backend.py status` to inspect selection; the default is off. When enabled, use bounded queries for relevant symbols/text. Respect source-fallback and truncation flags. Do not index, import, publish or change backend settings merely to answer a read-only question. CGC/Sourcegraph retrieval is not proof of complete branch semantic layers.

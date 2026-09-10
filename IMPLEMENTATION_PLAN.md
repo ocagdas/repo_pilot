@@ -1,14 +1,35 @@
 # Implementation plan
 
-Status: proposed, 7 September 2026. Companion to ROADMAP.md. This is a delivery plan for the tooling distribution, not a consumer project's task ledger. Implementation has not started. Current evidence remains in VALIDATION.md.
+Status: reconciled with the working tree, 8 September 2026. Companion to ROADMAP.md. This is a delivery plan for the tooling distribution, not a consumer project's task ledger. Work packages 1 (settings foundation) and 2 (local version overrides) are implemented; see project/ai_workflow/settings.md and VALIDATION.md. Work packages 3, 4 and 6 have partial deliveries. Pilot selection and the full semantic artifact/backend contract remain open. Current evidence remains in VALIDATION.md.
+
+## Delivery status and next actions
+
+| Work package | Current status | Remaining milestone |
+| --- | --- | --- |
+| 1: configuration | Implemented | Maintain documented precedence and preservation guarantees |
+| 2: Spec Kit selection | Implemented | Broaden evidence only for platforms actually exercised |
+| 3: artifact/backend contract | Partial: CGC identity/revision/checksum sidecar and two adapters | Select pilot; define build context, coverage, exact bases and invalidation |
+| 4: local knowledge | Partial: bounded clean-revision retrieval and source-fallback reporting | Measure correctness/tokens; add semantic updates and richer queries |
+| 5: trunks/cache | Planned | Ancestor snapshot selection, exact-base overlays and immutable shared cache |
+| 6: bundles | Partial: matching-revision CGC full snapshots | Overlay/base contracts, build compatibility and actual two-machine transfer |
+| 7: publication | Planned | Authenticated artifact discovery, publication, fetch and retention |
+| 8: scaling | Planned | Prioritise bottlenecks demonstrated by the pilot |
+
+Static/editable packaging, the repo-pilot launcher and optional dependency profiles are additional delivered work; see INSTALL_MODES.md. Delivery status includes pending working-tree changes and is not a release or commit claim.
+
+Next: select the pilot repository, record its languages/build variants/trunks and run repeatable source-only versus assisted tasks with actual agent clients. Use those results to finish work package 3 and prioritise work package 4 before semantic branch composition.
+
+Repository CI follow-up: add a regression workflow using the pinned CLI and the checks in CONTRIBUTING.md, then record actual remote results. No .github/workflows/validate.yml is currently included. This maintenance workflow is separate from work package 7's knowledge-artifact publication.
 
 ## Delivery approach
 
 Implement small, reviewable increments in the order below. Preserve the current installation and source-analysis paths throughout. Do not change the official upstream pin as part of configuration work. Each increment updates documentation and readiness only for capabilities actually delivered and tested.
 
-The configuration precedence proposed in ROADMAP.md is the working design: distribution defaults → user defaults → shared project → personal project → checkout-local → invocation. It remains explicit and reviewable rather than inferred differently by each command.
+The implemented configuration precedence is: distribution defaults → user defaults → shared project → personal project → checkout-local → invocation. It remains explicit and reviewable rather than inferred differently by each command.
 
 ## Work package 1: configuration foundation
+
+Implemented 8 September 2026 using schema 1.0 JSON settings and a shared resolver. The requirements below describe the delivered foundation.
 
 Dependencies: none.
 
@@ -25,6 +46,8 @@ Deliverable: working configuration resolver and documented migration contract. N
 
 ## Work package 2: effective Spec Kit selection
 
+Implemented 8 September 2026. See TOOLCHAIN_VERSIONS.md for supported behaviour and VALIDATION.md for executed checks.
+
 Dependencies: work package 1.
 
 - Route setup and installer pin checks through the same effective toolchain selection.
@@ -39,6 +62,8 @@ Acceptance: run actual installations for the default and one selected alternativ
 Deliverable: local version overrides usable without modifying or contributing changes to the distribution repository.
 
 ## Work package 3: artifact and backend contract
+
+Partial: CGC sidecars identify repository, exact revision, backend version and checksum. Two adapters exist; pilot selection, build/input compatibility, coverage and overlay semantics remain open.
 
 Dependencies: work package 1; can precede completion of work package 2.
 
@@ -55,6 +80,8 @@ Deliverable: versioned contract and a documented backend decision.
 
 ## Work package 4: local knowledge workflow
 
+Partial: explicit CGC full rebuilds, bounded retrieval and source-fallback reporting are implemented. Bootstrap reports backend selection without launching it. The retrieval adapter rejects dirty worktrees; semantic updates and measured accuracy/token results remain open.
+
 Dependencies: work packages 1 and 3.
 
 - Integrate the selected backend behind the contract; execute configured operations through validated tooling rather than relying on the LLM to compose shell commands.
@@ -69,6 +96,8 @@ Acceptance: compare queries against source/build evidence and a fresh index. Cov
 Deliverable: useful local retrieval with a measured source-only comparison. Measure cold generation, warm startup, incremental refresh, result accuracy and actual agent token use; set performance targets from this baseline.
 
 ## Work package 5: trunk selection and reusable snapshots
+
+Planned. Existing bootstrap inventories and branch deltas do not implement semantic composition.
 
 Dependencies: work package 4.
 
@@ -85,7 +114,9 @@ Deliverable: correct multi-trunk local reuse. Arbitrary non-ancestor transformat
 
 ## Work package 6: portable bundles
 
-Dependencies: work package 5.
+Partial: full CGC snapshots transfer between matching clean revisions with identity/version/checksum checks and clone path rebasing. This initial capability does not depend on work package 5; the overlay/base-aware scope below does. Two-machine validation remains open.
+
+Dependencies: work package 5 for overlay/base-aware bundles.
 
 - Add compact overlay and self-contained exports using one versioned bundle format.
 - Validate integrity, compatibility and base dependencies before atomic import/activation; reject unsafe archive paths and do not execute bundled commands.
@@ -98,6 +129,8 @@ Acceptance: demonstrate transfer between two actual machines, including differen
 Deliverable: manual sharing independent of a central server.
 
 ## Work package 7: CI publication and consumption
+
+Planned; no automated knowledge publication or fetching is implemented.
 
 Dependencies: work package 6; requires selection of artifact host, credentials, cadence and retention budget.
 
@@ -113,6 +146,8 @@ Deliverable: working team distribution for the pilot, with operational instructi
 
 ## Work package 8: scaling and additional adapters
 
+Planned; no measured token-saving or large-repository performance target has been established.
+
 Dependencies: pilot evidence from work packages 4–7.
 
 Prioritise measured bottlenecks: incremental CI generation, deduplication across trunks, dependency invalidation precision, summary reuse, retention and additional languages. Add provider/session hooks only where actual integrations can be exercised. Consider non-ancestor reuse only if its expected benefit justifies the correctness burden.
@@ -127,4 +162,8 @@ Update STATUS.md when a capability is delivered and VALIDATION.md when checks ac
 
 ## Decisions required before dependent implementation
 
-Configuration work can begin using the documented precedence proposal. Before backend selection, settle the pilot repository and build variants. Before hosted publication, settle the artifact service and authentication model. Before declaring performance success, agree numerical targets using the pilot baseline. No hosting, deployment or version change is performed by writing this plan.
+Configuration and initial adapters are already implemented. Before committing to the broader backend contract, settle the pilot repository and build variants. Before hosted publication, settle the artifact service and authentication model. Before declaring performance success, agree numerical targets using the pilot baseline. No hosting, deployment or version change is performed by writing this plan.
+
+## CGC / Sourcegraph retrieval pilot
+
+Implemented: default-off backend selection through settings and CLI, isolated CGC indexing/MCP queries, Sourcegraph revision-scoped MCP keyword queries, bounded output, and checked CGC bundle export/import with clone path rebasing. Next: backend accuracy/token benchmark, real Sourcegraph deployment validation, then immutable trunk manifests and dependency-aware branch composition.

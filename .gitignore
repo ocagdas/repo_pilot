@@ -1,3 +1,18 @@
 # Generated Python caches and bytecode
 __pycache__/
 *.py[cod]
+
+# Local Spec Kit environments and records
+.venv/
+.venv-speckit-*/
+.toolchains/
+*.setup.lock
+
+# Local code knowledge databases
+.ai_cache/
+.codegraphcontext/
+
+# Python distribution builds
+build/
+dist/
+*.egg-info/

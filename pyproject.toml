@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repo-pilot"
+version = "1.1.0"
+description = "Project guidance and optional code knowledge for GitHub Spec Kit"
+requires-python = ">=3.11"
+readme = "README.md"
+# setup_tooling.py installs the selected immutable Spec Kit source separately.
+dependencies = []
+
+[project.scripts]
+repo-pilot = "repo_pilot.cli:main"
+
+[project.optional-dependencies]
+cgc = ["codegraphcontext==0.6.13", "kuzu==0.11.3", "mcp==1.30.0"]
+sourcegraph = ["mcp==1.30.0"]
+all = ["codegraphcontext==0.6.13", "kuzu==0.11.3", "mcp==1.30.0"]
+
+[tool.setuptools]
+packages = ["repo_pilot"]
+package-dir = {repo_pilot = "."}
+include-package-data = false
+
+[tool.setuptools.package-data]
+repo_pilot = [
+  "upstream.lock.json", "legacy_v6_files.json", "requirements*.txt", "environment.yml",
+  "preset/**/*.md", "preset/*.yml", "extension/**/*.md", "extension/*.yml",
+  "project/*.md", "project/ai_workflow/*.md", "project/ai_workflow/*.json",
+  "project/ai_workflow/*.yaml", "project/ai_workflow/knowledge/*.json",
+  "project/ai_workflow/tools/*.py", "project/.github/*.md",
+  "project/.specify/memory/*.md", "project/.cursor/rules/*.mdc"
+]
+
+[tool.setuptools.exclude-package-data]
+repo_pilot = ["**/test_*.py", "**/__pycache__/*"]

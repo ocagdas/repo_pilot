@@ -1,12 +1,14 @@
 # Spec Kit engineering package
 
+Choose a **static** snapshot or **editable** source-linked installation, with `minimal`, `cgc`, `sourcegraph` or `all` dependencies. See [installation modes](INSTALL_MODES.md). Setup now installs the `repo-pilot` command as well as Spec Kit.
+
 This package adapts the official [GitHub Spec Kit](https://github.com/github/spec-kit) for embedded C and C++, Python and data science. It uses upstream v1.0.4 with a composable preset, an extension and project configuration. The official upstream remains unmodified. This custom package is not an official GitHub product.
 
 ## Start here
 
 Follow [QUICKSTART.md](QUICKSTART.md) for a guided installation, project configuration and first feature workflow.
 
-Read STATUS.md for what is ready and what remains unimplemented. Read ROADMAP.md for the proposed direction for personal overrides, portable knowledge, trunk snapshots and team sharing, and IMPLEMENTATION_PLAN.md for delivery work packages. Read INSTALLATION.md for native Python, venv, Conda and Docker instructions on Windows, Linux and macOS. Read REPOSITORY.md to push this distribution to your own Git repository.
+Read STATUS.md for what is ready and what remains unimplemented. Read ROADMAP.md for delivered personal overrides and the remaining portable knowledge, trunk snapshot and team sharing milestones, and IMPLEMENTATION_PLAN.md for delivery work packages. Read INSTALLATION.md for native Python, venv, Conda and Docker instructions on Windows, Linux and macOS. Read REPOSITORY.md to push this distribution to your own Git repository.
 
 For Linux or macOS, the shortest venv setup is:
 
@@ -24,9 +26,11 @@ py -3 install.py C:\work\project --integration copilot --apply
 
 Run from this tooling repository. Choose a Python 3.11 or newer installation and have Git on PATH. install.py discovers the local .venv CLI automatically. Omit --apply from either command to preview its work. Repeat --integration to select codex, cursor-agent and copilot together.
 
-Setup installs machine tooling. install.py configures the target repository. Once target configuration is committed, another clone reuses it; it needs tooling but not regenerated documents. All methods use the same official Spec Kit source pin and engineering package.
+Setup installs machine tooling. install.py configures the target repository. Once target configuration is committed, another clone reuses it; it needs tooling but not regenerated documents. All methods default to the same official source pin. Local version selection, records and upgrade previews are described in [TOOLCHAIN_VERSIONS.md](TOOLCHAIN_VERSIONS.md).
 
 ## Configure the project
+
+Personal overrides and effective-setting inspection are available; see [settings.md](project/ai_workflow/settings.md). Run `python3 configure.py inspect --repo /path/to/project` from this distribution.
 
 1. Fill in ai_workflow/project.yaml: project identity, domains, language versions, source documents and targets.
 2. Replace CUSTOMISE commands in ai_workflow/commands.yaml with actual repository commands. Pure Python projects can use environment checks instead of a compilation target. Add domain specific commands and completion gates as needed.
@@ -93,4 +97,8 @@ Do not copy the old actions.yaml, workflow.yaml or task schema into a migrated p
 
 ## Validation and remaining work
 
+See [KNOWLEDGE_SOLUTIONS.md](KNOWLEDGE_SOLUTIONS.md) for the sourced backend shortlist and token-efficiency pilot criteria. CGC and Sourcegraph are integrated as optional retrieval backends.
+
 See VALIDATION.md for checks actually performed. The pack does not include a compiler index engine, authenticated shared index publication, an automatic multi agent runner or a hardware test system. Optional adapters and real project commands still need configuration. The next pilot should use a representative C++ change and Python pipeline with two agent clients and real CI evidence.
+
+Optional CodeGraphContext and Sourcegraph retrieval now has a default-off selector, bounded queries and CGC bundle transfer. See [backend setup and sharing](project/ai_workflow/knowledge_backends.md).
