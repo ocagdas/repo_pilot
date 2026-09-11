@@ -1,61 +1,54 @@
-# Validation record
+# Current validation
 
-This file records the latest qualification state and explicit evidence boundaries. Historical detail is intentionally condensed to reduce drift; use Git history for superseded entries.
+Policy and check commands belong to [CI.md](CI.md); current capabilities belong to
+[STATUS.md](STATUS.md). This file records the latest qualification only. Superseded
+results remain in Git history; they do not qualify this delta.
 
-## Follow-up qualification — 11 September 2026
+## Qualified scope
 
-Re-ran the pending CI fixes on 01f90b3 with the prepared default/alternate Spec Kit
-installations and package tests enabled. `scripts/check.py --full` passed: **153 tests,
-no skips, GO**, including installer preservation, writable Windows flush regression,
-canonical paths, script imports and static/editable package qualification.
-Log: /tmp/followup-rp-full.log. Shared conformance and actionlint passed.
+Validated on Linux with Python 3.13.14 against the uncommitted source-layout, recovery-fixture, resource-detection,
+documentation and workflow-pin delta over `33822ba7e889452d5d2c676a2462dcdae549d164`. Package version remains 1.1.0;
+requirements.txt and upstream.lock.json were not changed.
 
-The fixes remain local. Hosted run 34539845643 belongs to the old committed source;
-Windows/macOS execution and actual integration-report upload still require the owner
-to publish the reviewed revision and obtain its hosted Quality gate. No hosted green
-status is inferred from this Linux run.
+| Check | Result |
+|---|---|
+| Strict `python scripts/check.py --full` | GO; 164 tests, no skips (132 distribution + 32 bootstrap) |
+| Default and alternate Spec Kit integration | Passed with the prepared pinned CLI environments and exported alternate record |
+| Actual static/editable package installation | Passed; live code/payload updates, stale-build exclusion, source relocation, consumer preservation and unrelated parent project metadata |
+| `python scripts/build_release.py --candidate --output /tmp/merge-ready-rp-artifacts` | Wheel and sdist built, Twine/checksum/provenance checks and isolated wheel installation passed |
+| Workflow pin consistency and actionlint | Passed, including drift/unpinned-version regression cases |
+| Documentation links and shared conformance | Passed |
 
-## Review fixes — 11 September 2026
+The full gate used `SPECIFY_BIN`, `SPECIFY_ALTERNATE_BIN`,
+`SPECIFY_ALTERNATE_RECORD` and `REPO_PILOT_PACKAGE_TESTS=1` as described in CI.md.
+Logs: `/tmp/yaml-pins-rp-full.log`, `/tmp/merge-ready-rp-release.log`. These are local session artifacts, not published evidence.
 
-The pending delta on 01f90b3 fixes installation planning/transaction races, writable
-copy flushing for Windows, canonical root aliases, direct-script imports, platform
-path assertions and explicit hidden integration-evidence uploads. New regressions
-cover authored edits, writable flush handles and unrelated scripts namespaces.
+The source distribution includes its payload and build helper. The wheel contains
+runtime and hidden consumer resources and excludes consumer tests, local settings and
+bytecode. Runtime code is in `src/repo_pilot`; authored payloads remain at root.
 
-- Full Linux gate: **153 tests passed, no skips** (121 repository + 32 bootstrap), GO.
-  Command: `python scripts/check.py --full` with both pinned Spec Kit installations
-  and REPO_PILOT_PACKAGE_TESTS=1. Log: /tmp/review-fixes-rp-full2.log.
-- Formatting, lint, distribution/shared contracts and static/editable installation
-  tests are included in that gate.
+## Unverified scope
 
-The old hosted run 34539845643 diagnosed real Windows flush, macOS path, Windows
-import and integration upload failures. Code/fixture corrections are locally tested;
-**new hosted Windows/macOS and evidence-upload runs have not occurred**.
+The updated revision has not run in hosted CI, Windows/macOS, Docker or Conda.
+Docker imports were updated and source launchers were tested on Linux; no container
+execution is claimed. Production Sourcegraph, live agents and token savings were not
+tested. The Sourcegraph integration here uses a protocol fixture. GitHub App/tag/public
+release activation remains separate from local build qualification; consult the
+[hosted setup guide](docs/development/github-policy-setup.md).
 
-## Consolidation evidence — 10 September 2026
+Versioning App publication remains disabled pending setup. Public GitHub Release/PyPI
+publication remains disabled. These local checks do not establish hosted qualification.
 
-- Full `scripts/check.py --full` with the provisioned toolchain environment: **149
-tests passed, no skips** (117 repository + 32 consumer tests), full-profile GO.
-Log: /tmp/rp-release-full.log.
-- Real wheel/source build from a clean annotated-tag fixture, common provenance and
-selected-tag/commit verification, isolated installed CLI/config inspection and
-consumer-resource checks passed. Log: /tmp/rp-release-artifacts.log.
-- Shared conformance, workflow actionlint and scoped formatting/lint checks passed in
-local qualification.
+The YAML-based workflow-pin validator now rejects the original inline-action bypass.
+Regression coverage includes flow mappings, quoted keys, aliases, reusable workflows,
+duplicate keys and shell-script text. The strict full gate passed after this change;
+workflow linting and shared bundle consistency passed across all three repositories.
+The previously built release artifact entry above predates this maintenance-script fix.
 
-No hosted CI/App publication, branch-rule changes, real tags, public/private releases,
-Windows/macOS execution on the reviewed revision, live providers/media, or new token
-benchmarks were performed in this consolidation checkpoint.
-
-## Current qualification boundary
-
-- Local Linux qualification is current.
-- Hosted qualification for the reviewed revision remains outstanding.
-- Versioning App publication for this repository remains unenabled pending setup.
-- Public GitHub Release/PyPI publication remains disabled.
-
-## Historical evidence
-
-Older validation narrative from earlier checkpoints was intentionally condensed to keep
-this file focused on current evidence. Use repository history when older run detail is
-needed for audit or forensic review.
+The subsequent aiplane-consolidation delta shares its safe version-mirror containment
+and trunk-specific publication tracking ref. Shared conformance, workflow linting and
+15 focused version/publication tests passed (`/tmp/divergence-rp-release-tests.log`).
+The earlier full-product run above predates this shared-helper delta. All managed
+files and bundle manifests are identical across the three repositories; the aiplane
+runner also passes conformance against this repository. Hosted qualification of the
+new helper revision remains pending.

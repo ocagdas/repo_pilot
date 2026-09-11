@@ -2,11 +2,11 @@
 
 import importlib.metadata
 import json
-from pathlib import Path
 import importlib
 import sys
 
-ROOT = Path(__file__).resolve().parent
+from .resources import PACKAGE_ROOT as ROOT, RESOURCE_ROOT
+
 COMMANDS = {
     "install": "install",
     "configure": "project.ai_workflow.tools.settings",
@@ -26,6 +26,7 @@ def main(argv=None):
                     "version": distribution.version,
                     "install_mode": "editable" if origin.get("dir_info", {}).get("editable") else "static",
                     "code_path": str(ROOT),
+                    "resource_path": str(RESOURCE_ROOT),
                 },
                 indent=2,
             )
@@ -41,5 +42,5 @@ def main(argv=None):
         print("Unknown command: " + args[0], file=sys.stderr)
         return 2
     name = COMMANDS[args[0]]
-    module = importlib.import_module("." + name, __package__) if __package__ else importlib.import_module(name)
+    module = importlib.import_module("." + name, __package__)
     return module.main(args[1:])

@@ -5,7 +5,9 @@ import os
 from pathlib import Path
 import shutil
 import sys
-import toolchains
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from repo_pilot import toolchains
 
 
 def main():

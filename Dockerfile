@@ -17,7 +17,7 @@ ARG SPEC_KIT_REF=""
 RUN if [ -n "$SPEC_KIT_REF" ]; then \
       python setup_tooling.py --mode venv --speckit-ref "$SPEC_KIT_REF" --export-record /opt/engineering/toolchain.json --apply; \
     else \
-      python -c "import toolchains; toolchains.write_record('toolchain.json', toolchains.resolve_selection())"; \
+      python -c "from repo_pilot import toolchains; toolchains.write_record('toolchain.json', toolchains.resolve_selection())"; \
     fi
 RUN chmod 644 /opt/engineering/toolchain.json
 ENTRYPOINT ["python", "/opt/engineering/docker_install.py"]

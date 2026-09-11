@@ -20,6 +20,11 @@ py -3 -m unittest discover -s project/ai_workflow/tools -p "test_*.py"
 
 Without SPECIFY_BIN the installation tests skip deliberately; report that omission. Test modified environment modes with actual tools before marking them verified. Keep CI and local evidence distinct.
 
+Runtime code lives in `src/repo_pilot/`; see [architecture](docs/architecture.md) for
+source/editable resource handling and wheel assembly. Root install/configure/knowledge
+commands are launchers. Edit `project/`, `preset/` and `extension/` at their authored
+paths; do not copy them into src.
+
 The preset composes with upstream templates and commands. The extension supplies additional procedures. Companion project files supply policy, configuration and local utilities. Avoid maintaining a second specification or task ledger alongside Spec Kit.
 
 Runtime modules intentionally remain at repository root and are packaged through pyproject mappings. Do not migrate to a `src/` layout unless a coordinated packaging/runtime migration is explicitly planned and validated.

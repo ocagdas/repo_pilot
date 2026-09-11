@@ -79,10 +79,14 @@ class DistributionTests(unittest.TestCase):
                 )
             ]:
                 shutil.copy2(file, source / file.name)
-            for name in ("project", "preset", "extension"):
+            for name in ("src", "project", "preset", "extension"):
                 shutil.copytree(ROOT / name, source / name, ignore=shutil.ignore_patterns("__pycache__"))
+            stale = source / "build/lib/repo_pilot/stale_module.py"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("stale = True\n", encoding="utf-8")
             launchers = {}
             locations = {}
+            resources = {}
             for mode in ("static", "editable"):
                 env = base / mode
                 subprocess.run([sys.executable, "-m", "venv", str(env)], check=True, capture_output=True)
@@ -98,6 +102,9 @@ class DistributionTests(unittest.TestCase):
                 )
                 self.assertEqual(info["install_mode"], mode)
                 locations[mode] = Path(info["code_path"])
+                self.assertFalse((locations[mode] / "stale_module.py").exists())
+                resources[mode] = Path(info["resource_path"])
+                self.assertTrue((locations[mode] / "install_transaction.py").is_file())
                 for name in (
                     "project/.specify/memory/constitution.md",
                     "project/.github/copilot-instructions.md",
@@ -106,12 +113,11 @@ class DistributionTests(unittest.TestCase):
                     "project/ai_workflow/tools/bootstrap_validation.py",
                     "project/ai_workflow/tools/knowledge_state.py",
                     "project/ai_workflow/bootstrap.schema.json",
-                    "install_transaction.py",
                     "preset/preset.yml",
                     "extension/extension.yml",
                     "legacy_v6_files.json",
                 ):
-                    self.assertTrue((locations[mode] / name).is_file(), name)
+                    self.assertTrue((resources[mode] / name).is_file(), name)
                 self.assertEqual(
                     json.loads(
                         subprocess.check_output(
@@ -161,7 +167,23 @@ class DistributionTests(unittest.TestCase):
                     )
                 )
                 self.assertEqual(prepared["action_required"], "full_analysis")
-            code = source / "cli.py"
+            # A static distribution may be vendored into another project's src/.
+            vendored = base / "consumer-project" / "src" / "repo_pilot"
+            vendored.parent.mkdir(parents=True)
+            (vendored.parent.parent / "pyproject.toml").write_text('[project]\nname="consumer"\n', encoding="utf-8")
+            shutil.copytree(locations["static"], vendored)
+            check = subprocess.run(
+                [sys.executable, "-c", "from repo_pilot import toolchains; print(toolchains.ROOT); toolchains.lock()"],
+                cwd=base,
+                env=os.environ | {"PYTHONPATH": str(vendored.parent)},
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            self.assertEqual(check.returncode, 0, check.stderr)
+            self.assertEqual(Path(check.stdout.strip()), vendored.resolve())
+
+            code = source / "src/repo_pilot/cli.py"
             code.write_text(
                 code.read_text(encoding="utf-8").replace("Usage: repo-pilot", "Changed usage: repo-pilot"),
                 encoding="utf-8",
@@ -173,7 +195,7 @@ class DistributionTests(unittest.TestCase):
                 self.assertEqual("Changed usage" in output, mode == "editable")
                 self.assertEqual(
                     "EDITABLE-PAYLOAD-MARKER"
-                    in (locations[mode] / "project/AI_CONTEXT.md").read_text(encoding="utf-8"),
+                    in (resources[mode] / "project/AI_CONTEXT.md").read_text(encoding="utf-8"),
                     mode == "editable",
                 )
             source.rename(base / "moved source")

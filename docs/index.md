@@ -8,3 +8,6 @@ Start with the [purpose](../PURPOSE.md), [quickstart](../QUICKSTART.md) and [ins
 - [Development guides](development/index.md): contribution, checks, versioning and knowledge design.
 - Consumer-loaded [settings](../project/ai_workflow/settings.md), [knowledge backends](../project/ai_workflow/knowledge_backends.md) and [workflow entry point](../project/AI_CONTEXT.md).
 - [Backend research](../KNOWLEDGE_SOLUTIONS.md), [license](../LICENSE), [notices](../NOTICE.md), [support](../SUPPORT.md), [security](../SECURITY.md) and [conduct](../CODE_OF_CONDUCT.md).
+
+[Documentation ownership](../REPOSITORY_STRUCTURE.md#documentation-ownership) explains
+where to change policy. Use Git history for previous validation and review records.

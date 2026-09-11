@@ -13,8 +13,9 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import install_transaction as transaction
-import install
+sys.path.insert(0, str(ROOT / "src"))
+from repo_pilot import install_transaction as transaction
+from repo_pilot import install
 
 
 class FinalReviewTests(unittest.TestCase):
@@ -98,3 +99,36 @@ class FinalReviewTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertRegex(result.stdout.strip(), r"^\d+\.\d+\.\d+$")
+
+
+class AliasedRecoveryTests(unittest.TestCase):
+    def test_recovery_faults_trigger_through_aliased_temp_directory(self):
+        from test_review_fixes import ReviewFixTests, RecoveryProcessTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            actual = root / "actual"
+            actual.mkdir()
+            alias = root / "alias"
+            try:
+                alias.symlink_to(actual, target_is_directory=True)
+            except OSError:
+                # Windows commonly disallows symlinks; a lexical alias still exercises
+                # normalization there. The normal platform suite covers native temp paths.
+                alias = actual / ".." / "actual"
+            tests = [
+                ReviewFixTests(name)
+                for name in (
+                    "test_failed_multi_file_write_rolls_back_and_retry_succeeds",
+                    "test_interrupted_transaction_requires_apply_and_recovers",
+                    "test_completed_transaction_cleanup_does_not_restore_old_files",
+                    "test_recovery_preserves_post_interruption_edits",
+                    "test_recovery_checks_all_backups_before_changing_targets",
+                    "test_recovery_refuses_live_owner",
+                )
+            ]
+            tests.append(RecoveryProcessTests("test_real_process_death_releases_lock_and_restores_snapshot"))
+            output = io.StringIO()
+            with patch.object(tempfile, "tempdir", str(alias)):
+                result = unittest.TextTestRunner(stream=output).run(unittest.TestSuite(tests))
+            self.assertTrue(result.wasSuccessful(), output.getvalue())

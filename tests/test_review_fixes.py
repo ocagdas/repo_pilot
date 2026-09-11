@@ -14,9 +14,10 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import cli
-import install_transaction as transaction
-import toolchains
+sys.path.insert(0, str(ROOT / "src"))
+from repo_pilot import cli
+from repo_pilot import install_transaction as transaction
+from repo_pilot import toolchains
 from project.ai_workflow.tools import knowledge_backend as kb
 from project.ai_workflow.tools import repo_bootstrap as bootstrap
 
@@ -25,7 +26,7 @@ class ReviewFixTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / "repo"
         self.repo.mkdir()
         self.source = self.root / "source"
@@ -268,8 +269,9 @@ class RecoveryProcessTests(unittest.TestCase):
         program = """
 import sys, time
 from pathlib import Path
-import install_transaction as t
-root, source = map(Path, sys.argv[1:])
+sys.path.insert(0, str(Path.cwd() / "src"))
+from repo_pilot import install_transaction as t
+root, source = (Path(value).resolve() for value in sys.argv[1:])
 original = t.atomic_copy
 def pause(source, destination):
     original(source, destination)
@@ -355,7 +357,7 @@ class CommandCancellationTests(unittest.TestCase):
                 + "]); time.sleep(30)"
             )
             parent = (
-                "import sys,toolchains\ntry: toolchains.run([sys.executable,'-c',"
+                "import sys; from pathlib import Path; sys.path.insert(0, str(Path.cwd() / 'src')); from repo_pilot import toolchains\ntry: toolchains.run([sys.executable,'-c',"
                 + repr(command)
                 + "])\nexcept KeyboardInterrupt: print('cancelled',flush=True)"
             )

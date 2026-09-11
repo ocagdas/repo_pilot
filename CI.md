@@ -70,18 +70,29 @@ Enable GitHub private vulnerability reporting so the route in SECURITY.md works.
 
 See VALIDATION.md for what actually ran. A workflow committed locally is readiness evidence, not a successful remote CI run or verified Windows/macOS support.
 
-Automatic patch versioning and annotated tags are implemented after the main quality gate. See [VERSIONING.md](VERSIONING.md) for policy, maintainer commands, GitHub App setup and recovery. The App credentials and repository rules must be configured before hosted automation can publish.
+## Contract and workflow maintenance
 
-The local/hosted quality gate also runs the shared 1.0.0 CLI conformance suite. Candidate builds are explicit; tagged builds require a clean exact annotated tag. See docs/development/repository-standard-design.md and standards/repository/v1 for schemas and adapter rules.
+The gate runs the shared conformance suite described in
+[REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md). [VERSIONING.md](VERSIONING.md)
+owns mutation and release policy; [GitHub setup](docs/development/github-policy-setup.md)
+owns hosted rules and activation. Refer to these owners when changing those policies.
 
-Shared conformance is mandatory in the static/local gate. The canonical verify-release.yml
-checks downloaded release identity before installation; see VERSIONING.md for each
-product's publication/verification activation. All external Actions are pinned.
+Workflow actions use full commit pins and exact version comments. All uses of the
+same action must agree across workflows; `scripts/validate_project.py` checks this.
+Update all occurrences together, review upstream changes, and rerun actionlint and CI.
+Integration uploads name `.quality/gate.json` and `.quality/tests.json` explicitly with
+hidden-file inclusion, so toolchain directories are not uploaded.
 
-Follow [BRANCHING.md](BRANCHING.md) for the shared trunk/dev branch convention,
-version/tag rules and REPOSITORY_VERSIONING_ENABLED activation setting.
+## Workflow dependency checks
 
-The integration evidence upload explicitly selects `.quality/gate.json` and
-`.quality/tests.json` with hidden-file inclusion enabled; it does not upload the full
-`.quality` tree or toolchain environments. A passed local gate does not substitute
-for a successful hosted Windows/macOS matrix run on the proposed revision.
+`python scripts/check_workflow_pins.py` requires full commit pins, exact version
+comments and identical revisions for repeated external actions. The managed repository
+conformance check runs it in the required gate. Update pins and their version comments
+together, review upstream compatibility, then run conformance and actionlint. Hosted
+execution still qualifies runner/action behavior; local syntax checks do not.
+
+The pin validator uses PyYAML from the developer dependencies to inspect action and
+reusable-workflow references structurally, including flow mappings and aliases. Put
+the exact `# vX.Y.Z` comment immediately after the pinned value (or its closing flow
+delimiters). Duplicate keys and YAML merge keys are rejected; shell-script contents
+are not treated as workflow actions.

@@ -12,8 +12,9 @@ import sys
 import sysconfig
 import tempfile
 
-from project.ai_workflow.tools.settings import resolve
-import toolchains
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from repo_pilot import toolchains
+from repo_pilot.project.ai_workflow.tools.settings import resolve
 
 ROOT = Path(__file__).resolve().parent
 

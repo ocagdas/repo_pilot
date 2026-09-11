@@ -25,11 +25,12 @@ Local bump commands edit the two mirrors but do not commit/push. Use a clean, cu
 
 ## Trunk and automatic policy
 
-The selected release trunk defaults to `main`, consistently across all three repositories. `REPOSITORY_TRUNK` is the common override for intentional policy changes. Checks still cover all branches. Update the trunk's protection rules when changing the selection; configuration alone does not grant a bypass.
+Repo Pilot's selected release trunk defaults to `main`. `REPOSITORY_TRUNK` is the common override for intentional policy changes. Checks still cover all branches. Update the trunk's protection rules when changing the selection; configuration alone does not grant a bypass.
 
 Ordinary PRs must leave package version values unchanged. The PR check compares against the merge base so a later trunk version bump does not invalidate an unchanged stale feature branch. After a qualifying trunk merge passes Quality gate, CI increments the patch and tags it. Maintainer-selected higher versions on a direct trunk push are tagged without a second bump. Direct code-only pushes run checks without a bump.
 
-`ci.yml` calls the reusable `version.yml` only after job success and `go == 'true'`, for a top-level CI push to the selected trunk at the same tested SHA. PR, manual, merge-queue and reusable release-check runs cannot mutate versions. PR detection is paginated and filters merged PRs to the selected trunk, supporting squash/rebase merges. Mutation is serialized per trunk.
+Automatic mutation requires `REPOSITORY_VERSIONING_ENABLED=true` and the configured App.
+Disabled automation leaves ordinary CI active. `ci.yml` calls the reusable `version.yml` only after job success and `go == 'true'`, for a top-level CI push to the selected trunk at the same tested SHA. PR, manual, merge-queue and reusable release-check runs cannot mutate versions. PR detection is paginated and filters merged PRs to the selected trunk, supporting squash/rebase merges. Mutation is serialized per trunk.
 
 The publisher requires a clean disposable checkout, matching HEAD/GITHUB_SHA and the exact remote trunk tip. It does not rebase onto newer untested code. An advanced tip returns `superseded`; rapid merges may coalesce into one patch. A later direct code-only push does not cause an automatic catch-up bump. Merge another PR or select a version explicitly if one is needed.
 
@@ -59,46 +60,15 @@ Conflicting tags are errors, never overwritten. On branch-rule rejection, networ
 
 Tags trigger full release-readiness checks and validated wheel/source artifacts. Source CI success is not proof that a subsequent tag build or public publication succeeded. [CI.md](CI.md) owns quality evidence; [VALIDATION.md](VALIDATION.md) records executed scope.
 
-Helpers implement owner-authorized shared conventions informed by aiplane and AI Content Factory. Repo Pilot remains MIT-licensed; ACF is private/proprietary and is not described as MIT-licensed. Copies here are local adapters with no sibling runtime imports. This interface transition removes the previous classifier mode names and test_version.py; no deployed consumers of those new maintenance helpers are established. Consumer-installed command/payload interfaces are unchanged.
+## Shared implementation and published verification
 
-Shared 1.0.0 schemas and precise status/build semantics are defined in [the standard design](docs/development/repository-standard-design.md). Any advanced remote reports superseded, including a prior patch child. Release builds require a clean annotated tag; use build_release.py --candidate for a development snapshot. Provenance is included in SHA256SUMS.
+[REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) links the authoritative shared
+interfaces and conformance suite. Repo Pilot keeps its mirror/build adapter and leaves
+public publication disabled. The standard design owns cross-repository semantics;
+this document owns Repo Pilot's operational settings and recovery commands.
 
-## Shared release implementation
-
-All three repositories vendor the same checksum-pinned repository standard under
-standards/repository/v1. scripts/repository_release.py owns version decisions and
-atomic publication; scripts/repository_provenance.py owns artifact identity;
-scripts/verify_release.py binds downloaded assets to the selected tag and commit.
-Product adapters retain mirror paths, build resources and publication policy.
-Run scripts/check_repository_standard.py to detect drift and exercise the interfaces
-against disposable Git fixtures. Never import a sibling checkout at runtime or in CI.
-
-Classification is independent of GitHub event variables; workflow guards authorize
-only the selected, successfully tested trunk push. An exact existing tag means no
-mutation. Any advanced remote, including an already published patch child, means
-superseded. A rejected push is an error; a new run rechecks the remote tip. Commit
-messages and actor names are not loop-breaking authority. Tags and assets are never
-moved or overwritten automatically.
-
-Every tagged build requires a clean checkout and annotated tag. SHA256SUMS covers
-both payloads and provenance.json. The metadata identifies the build commit/version,
-release or candidate status and payload digests. Published verification checks the
-selected tag/commit, then runs the product's installation checks. Artifact evidence
-uses schema 1 with tag, source_commit, checks and artifact digests; installation
-success is recorded by the workflow job, with additional product evidence where supplied.
-Failed verification fails the workflow for maintainer review; it never repairs or
-replaces published assets automatically. Hosted qualification remains necessary.
-
-`verify-release.yml` is dormant by default. For a future existing published release,
-set repository variable REPO_PILOT_VERIFY_PUBLISHED_RELEASES=true and dispatch with its tag.
-This variable enables verification only; it does not add or enable a publisher. The
-Linux verifier checks the downloaded wheel, CLI and consumer resources.
-
-Follow [BRANCHING.md](BRANCHING.md) for the shared trunk/dev branch convention,
-version/tag rules and REPOSITORY_VERSIONING_ENABLED activation setting.
-
-Automatic mutation additionally requires REPOSITORY_VERSIONING_ENABLED=true. This
-is true for aiplane, whose App settings already exist, and false for Repo Pilot and
-ACF until their repository-scoped App installation/key setup is complete. Disabled
-versioning does not fail ordinary CI and does not create commits/tags. It does not
-change the requirement for maintainer review before enabling automation.
+`verify-release.yml` is dormant by default. For an existing published release, set
+`REPO_PILOT_VERIFY_PUBLISHED_RELEASES=true` and dispatch with its tag. It verifies the
+downloaded wheel, CLI and consumer resources; it does not enable a publisher or replace
+assets. See [CI.md](CI.md) for build qualification and [VALIDATION.md](VALIDATION.md)
+for actual evidence. Hosted setup/state belongs to the [setup guide](docs/development/github-policy-setup.md).

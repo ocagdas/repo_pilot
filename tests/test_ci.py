@@ -75,3 +75,29 @@ class QualityGateTests(unittest.TestCase):
         )
         self.assertEqual(release["jobs"]["release-candidate"]["needs"], "checks")
         self.assertIn("outputs.go == 'true'", release["jobs"]["release-candidate"]["if"])
+
+
+class WorkflowPinTests(unittest.TestCase):
+    def test_inconsistent_or_unpinned_actions_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workflows = root / ".github/workflows"
+            workflows.mkdir(parents=True)
+            (workflows / "ci.yml").write_text(
+                "jobs:\n  test:\n    steps:\n      - uses: actions/checkout@" + "a" * 40 + " # v5.0.0\n",
+                encoding="utf-8",
+            )
+            other = workflows / "verify-release.yml"
+            for reference in ("b" * 40 + " # v5.0.0", "a" * 40 + " # v4.0.0", "v5", "a" * 40 + " # v5"):
+                with self.subTest(reference=reference):
+                    other.write_text(
+                        "jobs:\n  test:\n    steps:\n      - uses: actions/checkout@" + reference + "\n",
+                        encoding="utf-8",
+                    )
+                    with self.assertRaises(ValueError):
+                        validate_project.validate_workflow_pins(root)
+            other.write_text(
+                "jobs:\n  test:\n    steps:\n      - uses: actions/checkout@" + "a" * 40 + " # v5.0.0\n",
+                encoding="utf-8",
+            )
+            validate_project.validate_workflow_pins(root)

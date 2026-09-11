@@ -14,7 +14,8 @@ import sysconfig
 import tempfile
 import tomllib
 
-ROOT = Path(__file__).resolve().parent
+from .resources import RESOURCE_ROOT as ROOT
+
 OFFICIAL = "https://github.com/github/spec-kit"
 SHA = re.compile(r"^[0-9a-f]{40}$")
 RELEASE = re.compile(r"^v?[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$")

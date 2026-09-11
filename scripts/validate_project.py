@@ -9,6 +9,11 @@ import tomllib
 from jsonschema import Draft202012Validator
 import yaml
 
+if __package__:
+    from .check_workflow_pins import validate as validate_workflow_pins
+else:
+    from check_workflow_pins import validate as validate_workflow_pins
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -41,6 +46,7 @@ def validate(root=ROOT):
         for pattern in ("**/*.yml", "**/*.yaml"):
             for path in (root / folder).glob(pattern):
                 list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+    validate_workflow_pins(root)
     for name in (
         "LICENSE",
         "NOTICE.md",
