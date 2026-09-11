@@ -55,9 +55,11 @@ class SettingsTests(unittest.TestCase):
 
     def test_relative_paths_follow_declaring_file(self):
         self.write(self.user, {"tooling": {"env_dir": "envs/tools"}})
-        self.assertEqual(self.resolve()["settings"]["tooling"]["env_dir"], str(self.user.parent / "envs/tools"))
+        self.assertEqual(
+            self.resolve()["settings"]["tooling"]["env_dir"], str((self.user.parent / "envs/tools").resolve())
+        )
         self.write(self.local, {"tooling": {"env_dir": "../local-env"}})
-        self.assertEqual(self.resolve()["settings"]["tooling"]["env_dir"], str(self.repo / "local-env"))
+        self.assertEqual(self.resolve()["settings"]["tooling"]["env_dir"], str((self.repo / "local-env").resolve()))
 
     def test_clone_identity_and_checkout_isolation(self):
         other = self.root / "clone"

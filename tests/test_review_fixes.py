@@ -36,10 +36,10 @@ class ReviewFixTests(unittest.TestCase):
         target.write_text("authored", encoding="utf-8")
 
         def fail(source, temporary):
-            Path(temporary).write_text("partial", encoding="utf-8")
+            temporary.write(b"partial")
             raise OSError("disk full")
 
-        with patch.object(transaction.shutil, "copy2", side_effect=fail):
+        with patch.object(transaction.shutil, "copyfileobj", side_effect=fail):
             with self.assertRaises(OSError):
                 transaction.atomic_copy(self.source, target)
         self.assertEqual(target.read_text(encoding="utf-8"), "authored")

@@ -27,9 +27,11 @@ def atomic_copy(source, target):
     try:
         with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as handle:
             temporary = Path(handle.name)
-        shutil.copy2(source, temporary)
-        with temporary.open("rb") as handle:
+            with source.open("rb") as original:
+                shutil.copyfileobj(original, handle)
+            handle.flush()
             os.fsync(handle.fileno())
+        shutil.copystat(source, temporary)
         temporary.replace(target)
     finally:
         if temporary is not None:
@@ -37,6 +39,7 @@ def atomic_copy(source, target):
 
 
 def checked_path(target, relative):
+    target = Path(target).resolve()
     path = Path(relative)
     if path.is_absolute() or ".." in path.parts or not path.parts:
         raise RuntimeError("Invalid installation recovery path")
@@ -113,6 +116,7 @@ def retire(target, journal):
 
 
 def recover(target, apply=False):
+    target = Path(target).resolve()
     journal = target / JOURNAL
     if not journal.exists() and not journal.is_symlink():
         return
@@ -123,6 +127,7 @@ def recover(target, apply=False):
 
 
 def recover_locked(target):
+    target = Path(target).resolve()
     journal = target / JOURNAL
     cleanup_retired(target)
     if not journal.exists() and not journal.is_symlink():
@@ -180,14 +185,20 @@ def recover_locked(target):
     retire(target, journal)
 
 
-def apply_writes(target, writes):
+def apply_writes(target, writes, *, expected=None):
+    target = Path(target).resolve()
     with installation_lock(target):
         recover_locked(target)
-        apply_writes_locked(target, writes)
+        if expected is not None:
+            for relative, before in expected.items():
+                if digest(checked_path(target, relative)) != before:
+                    raise RuntimeError(f"File changed after installation planning: {relative}; retry installation.")
+        apply_writes_locked(target, writes, expected=expected)
 
 
-def apply_writes_locked(target, writes):
+def apply_writes_locked(target, writes, *, expected=None):
     """Map repository-relative paths to staged source files, or None for deletion."""
+    target = Path(target).resolve()
     journal = target / JOURNAL
     if any(p.is_symlink() for p in (journal, *journal.parents)):
         raise RuntimeError("Refusing symlink installation journal")
@@ -200,6 +211,8 @@ def apply_writes_locked(target, writes):
             path = checked_path(target, relative)
             backup = f"{number}.original"
             before = digest(path)
+            if expected is not None and relative in expected and before != expected[relative]:
+                raise RuntimeError(f"File changed after installation planning: {relative}")
             if before is not None:
                 atomic_copy(path, journal / backup)
             entries.append(

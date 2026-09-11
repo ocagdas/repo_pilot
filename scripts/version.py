@@ -11,9 +11,9 @@ import subprocess
 import sys
 import tomllib
 
-try:
-    from scripts import repository_release as shared
-except ModuleNotFoundError:
+if __package__:
+    from . import repository_release as shared
+else:
     import repository_release as shared
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -80,3 +80,8 @@ product's publication/verification activation. All external Actions are pinned.
 
 Follow [BRANCHING.md](BRANCHING.md) for the shared trunk/dev branch convention,
 version/tag rules and REPOSITORY_VERSIONING_ENABLED activation setting.
+
+The integration evidence upload explicitly selects `.quality/gate.json` and
+`.quality/tests.json` with hidden-file inclusion enabled; it does not upload the full
+`.quality` tree or toolchain environments. A passed local gate does not substitute
+for a successful hosted Windows/macOS matrix run on the proposed revision.

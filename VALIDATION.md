@@ -1,5 +1,42 @@
 # Validation record
 
+## Follow-up qualification — 11 September 2026
+
+Re-ran the pending CI fixes on 01f90b3 with the prepared default/alternate Spec Kit
+installations and package tests enabled. `scripts/check.py --full` passed: **153 tests,
+no skips, GO**, including installer preservation, writable Windows flush regression,
+canonical paths, script imports and static/editable package qualification.
+Log: /tmp/followup-rp-full.log. Shared conformance and actionlint passed.
+
+The fixes remain local. Hosted run 34539845643 belongs to the old committed source;
+Windows/macOS execution and actual integration-report upload still require the owner
+to publish the reviewed revision and obtain its hosted Quality gate. No hosted green
+status is inferred from this Linux run.
+
+## Review fixes — 11 September 2026
+
+The pending delta on 01f90b3 fixes installation planning/transaction races, writable
+copy flushing for Windows, canonical root aliases, direct-script imports, platform
+path assertions and explicit hidden integration-evidence uploads. New regressions
+cover authored edits, writable flush handles and unrelated scripts namespaces.
+
+- Full Linux gate: **153 tests passed, no skips** (121 repository + 32 bootstrap), GO.
+  Command: `python scripts/check.py --full` with both pinned Spec Kit installations
+  and REPO_PILOT_PACKAGE_TESTS=1. Log: /tmp/review-fixes-rp-full2.log.
+- Formatting, lint, distribution/shared contracts and static/editable installation
+  tests are included in that gate.
+- The first full run exposed a disk-full fixture still patching copy2; it now injects
+  the failure into copyfileobj and still verifies original-file preservation/cleanup.
+
+The old hosted run 34539845643 diagnosed real Windows flush, macOS path, Windows
+import and integration upload failures. Code/fixture corrections are locally tested;
+**new hosted Windows/macOS and evidence-upload runs have not occurred**. Push the
+reviewed revision through the normal process and require its Quality gate.
+
+All three pass shared managed-file hashes, actionlint and patch whitespace checks.
+Shared bundle SHA-256: `f907247d239cad6cb98efda366a5ba8e9c409d1d56621e8ebf7abb693a17220b`. No commits, pushes, tags, releases or hosted
+settings changes were made during this fix task.
+
 ## Final branch and consolidation review — 10 September 2026
 
 Full quality gate passed: 149 tests, no skips (117 repository + 32 consumer). Log: /tmp/unified-policy-rp-full.log.

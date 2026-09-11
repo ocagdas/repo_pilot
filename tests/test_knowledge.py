@@ -168,7 +168,7 @@ class KnowledgeTests(unittest.TestCase):
             encoding="utf-8",
         )
         result = kb.map_matches(ctx, [{"name": "hello", "path": "/virtual/bundle/producer-name/sample.py"}], 1)
-        self.assertEqual(result["matches"][0]["path"], str(self.repo / "sample.py"))
+        self.assertEqual(result["matches"][0]["path"], str((self.repo / "sample.py").resolve()))
         with self.assertRaises(SettingsError):
             kb.map_matches(ctx, [{"path": "/virtual/bundle/producer-name/missing.py"}], 1)
         with self.assertRaises(ValueError):

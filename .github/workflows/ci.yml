@@ -102,7 +102,10 @@ jobs:
         if: always()
         with:
           name: integration-evidence
-          path: .quality/*.json
+          path: |
+            .quality/gate.json
+            .quality/tests.json
+          include-hidden-files: true
           if-no-files-found: error
   artifacts:
     name: Distribution artifacts

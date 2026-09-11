@@ -43,3 +43,9 @@ The shared trunk/dev policy and audit fixes are implemented. Hosted branch/tag r
 are active in aiplane and Repo Pilot; ACF owner/admin and plan changes remain required. ACF retains master.
 See [GitHub policy setup](docs/development/github-policy-setup.md) for exact state and
 remaining App credentials. Automatic versioning is enabled only in aiplane for now.
+
+Installer planning hashes now remain preconditions through transaction entry, and
+copies flush a writable temporary handle before applying source metadata. Trusted
+root aliases are canonicalized while in-repository symlinks remain rejected. CI
+integration evidence uses explicit report paths; direct release scripts use explicit
+package/sibling imports. Hosted Windows/macOS reruns are required for the revised delta.

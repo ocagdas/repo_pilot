@@ -100,3 +100,7 @@ docker run --rm --entrypoint repo-pilot \
 ```
 
 This editable example uses the default pinned Spec Kit in the image. It bypasses the legacy Docker wrapper's image-local source record, which a checkout mount would hide. Rebuild for dependency changes. For alternate Spec Kit image versions, use the existing static image flow in [docs/user/toolchain-versions.md](toolchain-versions.md). Mount caches separately if backend data must persist, and follow your normal container UID/GID configuration to preserve host ownership.
+
+Installation rechecks files against the contents observed during planning. If another
+process edits a destination before the transaction starts, installation stops and
+preserves the edit; review it and rerun the command. No overwrite flag is needed.

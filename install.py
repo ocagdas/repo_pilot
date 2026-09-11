@@ -55,6 +55,13 @@ def install(args):
         legacy = json.loads((ROOT / "legacy_v6_files.json").read_text(encoding="utf-8"))
         retirement = []
         conflicts = []
+        # Carry the planning snapshot into the transaction; editors do not acquire our lock.
+        observed = {
+            name: install_transaction.digest(install_transaction.checked_path(target, name))
+            for name in set(incoming)
+            | (set(legacy) if args.migrate_v6 else set())
+            | {".gitignore", ".specify/engineering-install.json"}
+        }
         ledger_path = target / ".specify/engineering-install.json"
         ledger = {}
         if ledger_path.exists():
@@ -129,7 +136,11 @@ def install(args):
         backup = (
             target / ".ai_migration_backup" / datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%f")
         )
-        writes = {relative: source for relative, source in incoming.items() if relative not in preserved}
+        writes = {
+            relative: source
+            for relative, source in incoming.items()
+            if relative not in preserved and (relative in retirement or observed[relative] != digest(source))
+        }
         for relative in retirement:
             archived = stage / ".retired" / relative
             archived.parent.mkdir(parents=True, exist_ok=True)
@@ -169,7 +180,7 @@ def install(args):
             },
         )
         writes[".specify/engineering-install.json"] = staged_ledger
-        install_transaction.apply_writes(target, writes)
+        install_transaction.apply_writes(target, writes, expected=observed)
         if getattr(args, "export_record", None):
             toolchains.write_record(args.export_record, {**selection, "compatibility": compatibility})
         print(

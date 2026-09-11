@@ -21,9 +21,9 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 
 
-try:
-    from scripts.repository_provenance import write_provenance, verify_provenance
-except ModuleNotFoundError:
+if __package__:
+    from .repository_provenance import write_provenance, verify_provenance
+else:
     from repository_provenance import write_provenance, verify_provenance
 
 
