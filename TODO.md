@@ -2,7 +2,14 @@
 
 This is the tooling distribution's actionable backlog. Consumer feature work still uses Spec Kit's own tasks.md. Milestones and acceptance belong in [ROADMAP.md](ROADMAP.md); capabilities and evidence belong in [STATUS.md](STATUS.md) and [VALIDATION.md](VALIDATION.md).
 
-## Pilot and knowledge contract
+## Priority now (P1 stabilization)
+
+- Configure the versioning App variables/secret and narrowly scoped App bypass described in VERSIONING.md; branch/tag rules are active. Enable REPOSITORY_VERSIONING_ENABLED only after App setup.
+- Run hosted CI and tag-triggered release readiness; prove the active Quality gate rule blocks failing PRs and verify commit/run evidence and App publication on the selected trunk.
+- Execute the declared macOS/Windows matrix and record results. Broaden native installation, real backend and live-agent evidence only through actual runs.
+- Verify the real private security-reporting feature/contact route before advertising it as enabled; maintain the existing SECURITY.md procedure without inventing contacts.
+
+## Next (P2 pilot execution and contract hardening)
 
 - Select a representative repository, languages, build variants, release/RC trunks and real agent clients for a repeatable pilot.
 - Measure source-only versus assisted correctness, cold generation, warm startup, incremental refresh, retrieval accuracy, storage and actual agent token use; agree numerical targets from that baseline.
@@ -11,7 +18,7 @@ This is the tooling distribution's actionable backlog. Consumer feature work sti
 - Connect semantic refresh/query status to bootstrap through validated operations and effective source/index/auto, origin and update/fetch policies. Preserve read-only/source fallback behavior.
 - Implement dirty-worktree semantic updates, rename/deletion/reversion handling and isolated concurrent worktrees. Compare results with a fresh index.
 
-## Trunks, portability and teams
+## Later (P2 portability and team distribution)
 
 - Implement explicit logical trunk selection and branch override, with ancestry inference, ambiguity reporting and shallow/missing-ref/detached-HEAD handling.
 - Select compatible ancestor snapshots independently of logical trunk association; compose overlays from the exact base to HEAD and then worktree changes. Revalidate after switches, merges, rebases and rewrites.
@@ -22,12 +29,5 @@ This is the tooling distribution's actionable backlog. Consumer feature work sti
 - Implement immutable trunk publication/catalogs, authenticated discovery/fetch, interrupted-download recovery, offline reuse and historical-base retention using the same manual bundle contract.
 - Run a hosted knowledge publication/second-developer consumption pilot before marking team distribution delivered.
 - Prioritize additional languages, summary reuse, cache retention, deduplication and non-ancestor reuse only from measured bottlenecks.
-
-## Hosted quality and distribution qualification
-
-- Configure the versioning App variables/secret and narrowly scoped App bypass described in VERSIONING.md; branch/tag rules are active. Enable REPOSITORY_VERSIONING_ENABLED only after App setup.
-- Run hosted CI and tag-triggered release readiness; prove the active Quality gate rule blocks failing PRs and verify commit/run evidence and App publication on the selected trunk.
-- Execute the declared macOS/Windows matrix and record results. Broaden native installation, real backend and live-agent evidence only through actual runs.
-- Verify the real private security-reporting feature/contact route before advertising it as enabled; maintain the existing SECURITY.md procedure without inventing contacts.
 
 Public GitHub Release/PyPI publication remains disabled. Any future publication policy requires an explicit owner decision and qualification of downloaded assets; standardization does not authorize it.
