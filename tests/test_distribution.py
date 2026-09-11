@@ -47,12 +47,15 @@ class DistributionTests(unittest.TestCase):
             data["version"], json.loads((ROOT / "upstream.lock.json").read_text(encoding="utf-8"))["package_version"]
         )
         self.assertEqual(data["dependencies"], [])
-        self.assertEqual(data["optional-dependencies"]["sourcegraph"], ["mcp==1.30.0"])
         requirements = [
             line
             for line in (ROOT / "requirements-knowledge.txt").read_text(encoding="utf-8").splitlines()
             if line and not line.startswith("#")
         ]
+        mcp = [requirement for requirement in requirements if requirement.startswith("mcp==")]
+        self.assertEqual(len(mcp), 1, "Keep exactly one shared MCP pin")
+        self.assertEqual(data["optional-dependencies"]["sourcegraph"], mcp)
+        self.assertEqual(set(data["optional-dependencies"]["cgc"]), set(requirements))
         self.assertEqual(set(data["optional-dependencies"]["all"]), set(requirements))
 
     @unittest.skipUnless(

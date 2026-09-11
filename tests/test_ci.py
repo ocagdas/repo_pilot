@@ -17,6 +17,32 @@ from scripts import check, run_tests, validate_project
 
 
 class QualityGateTests(unittest.TestCase):
+    def test_setup_failure_has_uploadable_no_go_evidence(self):
+        import yaml
+
+        workflow = yaml.load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+        steps = workflow["jobs"]["integration"]["steps"]
+        initializer = next(i for i, step in enumerate(steps) if "initialize_reports" in step.get("run", ""))
+        install = next(i for i, step in enumerate(steps) if "pip install" in step.get("run", ""))
+        self.assertLess(initializer, install)
+        upload = next(step for step in steps if step.get("uses", "").startswith("actions/upload-artifact@"))
+        self.assertEqual(upload["if"], "always()")
+        self.assertEqual(upload["with"]["include-hidden-files"], "true")
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "gate.json").write_text('{"go": true}', encoding="utf-8")
+            check.initialize_reports(directory)
+            gate = json.loads((directory / "gate.json").read_text(encoding="utf-8"))
+            tests = json.loads((directory / "tests.json").read_text(encoding="utf-8"))
+            self.assertIs(gate["go"], False)
+            self.assertIs(tests["passed"], False)
+            self.assertEqual(gate["checks"], [])
+            self.assertEqual(tests["suites"], [])
+            # Successful execution replaces setup placeholders, not merely the GO flag.
+            with patch.object(check.subprocess, "run", return_value=SimpleNamespace(returncode=0)):
+                self.assertEqual(check.main(["--full", "--report", str(directory / "gate.json")]), 0)
+            self.assertNotIn("error", json.loads((directory / "gate.json").read_text(encoding="utf-8")))
+
     def test_local_gate_overwrites_stale_go_and_stops_on_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "gate.json"

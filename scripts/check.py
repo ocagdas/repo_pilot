@@ -11,6 +11,30 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def initialize_reports(directory=ROOT / ".quality"):
+    """Leave honest failure evidence if dependency/toolchain setup prevents the gate running."""
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    records = {
+        "gate.json": {
+            "schema_version": "1.0",
+            "profile": "full",
+            "go": False,
+            "checks": [],
+            "error": "Integration setup did not reach the quality gate; see job logs.",
+        },
+        "tests.json": {
+            "schema_version": "1.0",
+            "profile": "full",
+            "passed": False,
+            "suites": [],
+            "error": "Tests have not run; see integration setup and quality gate logs.",
+        },
+    }
+    for name, record in records.items():
+        (directory / name).write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(

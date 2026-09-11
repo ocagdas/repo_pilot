@@ -96,3 +96,14 @@ reusable-workflow references structurally, including flow mappings and aliases. 
 the exact `# vX.Y.Z` comment immediately after the pinned value (or its closing flow
 delimiters). Duplicate keys and YAML merge keys are rejected; shell-script contents
 are not treated as workflow actions.
+
+Integration initializes `gate.json` and `tests.json` before Python dependency and
+Spec Kit setup. Until checks execute, these record NO-GO and tests not run. Setup
+failures therefore retain uploadable diagnostics; successful gate/test execution
+replaces the placeholders. Artifact upload and the required Quality gate still fail
+on missing evidence or unsuccessful dependencies.
+
+The shared Dependabot policy excludes MCP 2.x and later while CodeGraphContext
+0.6.x requires MCP below 2. Keep the exact MCP pin synchronized between package
+extras and `requirements-knowledge.txt`; qualify a compatible backend before lifting
+that restriction. Dependency upgrades must resolve the complete `[dev,all]` extra.
